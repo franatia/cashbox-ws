@@ -19,7 +19,7 @@ export class User {
 
     @Column({
         type: "text",
-        select : false
+        // select : false
     })
     password!: string;
 
@@ -34,9 +34,9 @@ export class User {
         nullable: true
     })
     imageProfile!: string | null;
-    
+
     @OneToMany(
-        () => Session, 
+        () => Session,
         (session) => session.user
     )
     sessions!: Session[]

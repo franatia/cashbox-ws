@@ -30,7 +30,7 @@ export class AuthService {
     private readonly jwtService: JwtService
   ) { }
 
-  async findUser(payload: FindOptionsWhere<User>, options ?: FindOneOptions<User>){
+  async findUser(payload: FindOptionsWhere<User>, options?: FindOneOptions<User>) {
     return await this.userRepo.findOne({
       where: payload,
       ...options
@@ -158,7 +158,9 @@ export class AuthService {
     let userSnapshot = user ?? await this.userRepo.findOne({
       where: { email },
       select: {
-        password: true
+        password: true,
+        email: true,
+        id: true
       }
     });
 
@@ -178,7 +180,7 @@ export class AuthService {
       isAuth
     }
 
-    if (!isAuth){
+    if (!isAuth) {
       await this.sendEmailToken(userSnapshot!.email);
       payloadReturn["send"] = true;
     }
