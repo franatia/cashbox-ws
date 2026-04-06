@@ -235,7 +235,7 @@ export class ProductService {
 
     const { projectId, ...payload } = createProductDto;
 
-    await this.projectService.projectLinkedToUser(projectId, user);
+    await this.projectService.hasProjectAdminAccess(projectId, user);
 
     const slug = createProductDto.name.toLowerCase().replace(" ", "-");
 
@@ -263,6 +263,8 @@ export class ProductService {
   ) {
     const { projectId, productId, features } = createProductItems;
 
+    await this.projectService.hasProjectMainAccess(projectId, user);
+
     let totalCombinations = 1;
 
     features.forEach(feature => {
@@ -273,8 +275,6 @@ export class ProductService {
       }
 
     });
-
-    await this.projectService.projectLinkedToUser(projectId, user);
 
     await this.featuresLinkedToProduct(
       features.map(feature => feature.id),
@@ -324,7 +324,7 @@ export class ProductService {
     user: string,
   ) {
 
-    await this.projectService.projectLinkedToUser(projectId, user);
+    await this.projectService.hasProjectAdminAccess(projectId, user);
 
     await this.productLinkedToProject(productId, projectId);
 
@@ -437,7 +437,7 @@ export class ProductService {
       ...payload
     } = createItemGroupDto;
 
-    await this.projectService.projectLinkedToUser(projectId, user);
+    await this.projectService.hasProjectAdminAccess(projectId, user);
 
     await this.productLinkedToProject(productId, projectId);
 

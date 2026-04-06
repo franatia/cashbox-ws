@@ -3,6 +3,7 @@ import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToOne, PrimaryGen
 import { ProductItem } from "./product-item.entity";
 import { ProductItemGroup } from "./product-item-group.entity";
 import { ProductFeature } from "./product-feature.entity";
+import { FeatureSchemaItem } from "./feature-schema-item.entity";
 
 @Entity({
     schema: DatabaseSchemas.main,
@@ -27,6 +28,15 @@ export class FeatureValue{
     )
     productFeature!: ProductFeature;
 
+    @ManyToOne(
+        () => FeatureSchemaItem,
+        {
+            eager: false,
+            nullable: true
+        }
+    )
+    featureSchemaItem!: FeatureSchemaItem | null;
+
     @ManyToMany(
         () => ProductItem,
         productItem => productItem.featureValues,
@@ -41,7 +51,6 @@ export class FeatureValue{
         productItemGroup => productItemGroup.featureValues,
         {
             eager: false,
-            nullable: true,
             onDelete: "CASCADE"
         }
     )

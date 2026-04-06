@@ -30,10 +30,18 @@ export class AuthService {
     private readonly jwtService: JwtService
   ) { }
 
-  async findUser(payload: FindOptionsWhere<User>, options ?: FindOneOptions<User>){
-    return await this.userRepo.findOne({
-      where: payload,
-      ...options
+  async findUser(payload: FindOptionsWhere<User>){
+    return await this.userRepo.createQueryBuilder("user")
+      .addSelect("user.password")
+      .where(payload)
+      .getOne();
+  }
+
+  async existsUser(id : string){
+    return await this.userRepo.exists({
+      where: {
+        id
+      }
     })
   }
 
@@ -155,12 +163,9 @@ export class AuthService {
   async logIn(logInDto: LogInDto, user: User | null) {
 
     const { email, password } = logInDto;
-    let userSnapshot = user ?? await this.userRepo.findOne({
-      where: { email },
-      select: {
-        password: true
-      }
-    });
+    let userSnapshot = user ?? await this.findUser({
+      email
+    })
 
     const isMatch = await match(password, userSnapshot!.password)
 

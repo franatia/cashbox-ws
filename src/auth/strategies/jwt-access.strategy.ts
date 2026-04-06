@@ -38,10 +38,6 @@ export default class JwtAccessStrategy extends PassportStrategy(Strategy, JwtTyp
 
         const user = await this.authService.findUser({
             id,
-        }, {
-            select:{
-                password: true
-            }
         })
 
         if (!user) throw new GoneException("User does not exists");

@@ -15,6 +15,14 @@ export enum ProductSubtractType {
     NONE = "NONE"
 }
 
+export enum ProductUnitType {
+    G = "G",
+    KG = "KG",
+    L = "L",
+    ML = "ML",
+    UNIT = "UNIT"
+}
+
 @Entity({
     schema: DatabaseSchemas.main,
     name: "products"
@@ -133,4 +141,10 @@ export class Product {
         default: 0
     })
     basePrice!: number;
+
+    @Column({
+        type: "enum",
+        enum: ProductUnitType
+    })
+    unit !: ProductUnitType;
 }

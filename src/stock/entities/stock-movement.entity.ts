@@ -2,9 +2,9 @@ import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
 import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Stock } from "./stock.entity";
 import { User } from "@/auth/entities";
-import { StockTransfer } from "./stock-transfer.entity";
 import { MovementDirection } from "@/common/constants/movement-direction.enum";
 import { Lot } from "./lot.entity";
+import { StockTransferItem } from "./stock-transfer-item.entity";
 
 @Entity({
     schema: DatabaseSchemas.main,
@@ -45,13 +45,13 @@ export class StockMovement {
     createdBy!: User;
 
     @ManyToOne(
-        () => StockTransfer,
+        () => StockTransferItem,
         {
             eager: false,
             nullable: true
         }
     )
-    transfer!: StockTransfer | null;
+    transfer!: StockTransferItem | null;
 
     @ManyToOne(
         () => Lot,

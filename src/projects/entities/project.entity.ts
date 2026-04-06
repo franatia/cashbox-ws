@@ -17,6 +17,7 @@ import { Debt } from "@/debt/entities/debt.entity";
 import { StockTransfer } from "@/stock/entities/stock-transfer.entity";
 import { CustomerSegment } from "@/customer/entities/customer-segment.entity";
 import { TaxSchema } from "@/tax/entities/tax-schema.entity";
+import { FeatureSchema } from "@/product/entities/feature-schema.entity";
 
 @Entity({
     schema: DatabaseSchemas.main,
@@ -157,6 +158,16 @@ export class Project {
         }
     )
     taxSchemas!: TaxSchema[];
+
+    @OneToMany(
+        () => FeatureSchema,
+        featureSchema => featureSchema.project,
+        {
+            eager: false,
+            nullable: false
+        }
+    )
+    featureSchemas!: FeatureSchema[];
 
     @OneToMany(
         () => PriceList,

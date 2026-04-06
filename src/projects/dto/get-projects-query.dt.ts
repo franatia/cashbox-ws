@@ -5,6 +5,6 @@ export default class GetProjectsQueryDto extends GetProjectQueryDto {
 
     @IsOptional()
     @IsUUID()
-    selectBy !: string;
+    nodeSelector !: string | undefined;
 
 }
