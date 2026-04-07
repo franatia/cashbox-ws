@@ -4,7 +4,7 @@ import { CollaboratorRole } from "../entities/collaborator.entity";
 export default class CreateCollaboratorDto {
 
     @IsUUID()
-    user !: string;
+    userId !: string;
 
     @IsUUID()
     projectId !: string;
