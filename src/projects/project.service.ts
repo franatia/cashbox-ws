@@ -16,7 +16,7 @@ import { Collaborator, CollaboratorRole } from './entities/collaborator.entity';
 import UpdateCollaboratorDto from './dto/update-collaborator.dto';
 import GetCollaboratorsQueryDto from './dto/get-collaborators-query.dto';
 import { AuthService } from '@/auth/auth.service';
-import { ParticipationFilter, ProjectServiceQuery } from './query/project.service.querty';
+import { ParticipationFilter, ProjectServiceQuery } from './query/project.service.query';
 import DeleteCollaboratorDto from './dto/delete-collaborator.dto';
 
 /**
