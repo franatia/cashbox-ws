@@ -8,7 +8,7 @@ import { User } from "../entities";
 import { Repository } from "typeorm";
 import { Reflector } from "@nestjs/core";
 import { ref } from "process";
-import { IS_PUBLIC_KEY } from "../decorators/public.decorator";
+import { IS_PUBLIC_KEY } from "../../common/decorators/public.decorator";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import Configuration from "@/config/interfaces/configuration.interface";

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { ProjectController } from './project.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -7,16 +7,18 @@ import { Node } from './entities/node.entity';
 import { Collaborator } from './entities/collaborator.entity';
 import { CashboxModule } from '@/cashbox/cashbox.module';
 import { AuthModule } from '@/auth/auth.module';
-import {ProjectServiceQuery} from './query/project.service.query';
+import { ProjectServiceQuery } from './query/project.service.query';
+import { AccessModule } from '@/access/access.module';
 
 @Module({
   imports: [
+    forwardRef(() => AccessModule),
     TypeOrmModule.forFeature([Project, Node, Collaborator]),
     CashboxModule,
     AuthModule
   ],
   controllers: [ProjectController],
   providers: [ProjectService, ProjectServiceQuery],
-  exports: [ProjectService]
+  exports: [ProjectService, TypeOrmModule]
 })
-export class ProjectModule {}
+export class ProjectModule { }

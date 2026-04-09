@@ -18,6 +18,7 @@ import GetCollaboratorsQueryDto from './dto/get-collaborators-query.dto';
 import { AuthService } from '@/auth/auth.service';
 import { ParticipationFilter, ProjectServiceQuery } from './query/project.service.query';
 import DeleteCollaboratorDto from './dto/delete-collaborator.dto';
+import { AccessService } from '@/access/access.service';
 
 /**
  * ============================================================
@@ -61,6 +62,8 @@ export class ProjectService {
 
     private readonly authService: AuthService,
 
+    private readonly accessService: AccessService,
+
     private readonly projectServiceQuery: ProjectServiceQuery,
 
     @InjectRepository(Project)
@@ -73,122 +76,6 @@ export class ProjectService {
     private readonly collaboratorRepo: Repository<Collaborator>,
 
   ) { }
-
-  /**
-   * ============================================================
-   * 🔐 VERIFY (CONTROL DE ACCESO & VALIDACIONES)
-   * ============================================================
-   * Métodos encargados de:
-   * - Validar permisos de usuario sobre proyectos/nodos
-   * - Verificar relaciones entre entidades
-   * - Evitar accesos indebidos
-   */
-
-  /**
-   * Verifica si el usuario tiene rol ADMIN en un proyecto.
-   *
-   * @param projectId - ID del proyecto
-   * @param userId - ID del usuario
-   * @param wholeProject - Si debe ser un colaborador global del proyecto
-   * @param throwable - Si lanza excepción en caso negativo
-   * @returns boolean
-   */
-
-  async hasProjectAdminAccess(projectId: string, userId: string, wholeProject = true, throwable = true) {
-
-    return this.projectServiceQuery.hasProjectAccess(projectId, userId, [CollaboratorRole.ADMIN], wholeProject, throwable);
-
-  }
-
-  /**
-   * 
-   * Verifica acceso "principal" (ADMIN | MANAGER) a proyecto.
-   * 
-   * @param projectId 
-   * @param userId 
-   * @param wholeProject - Si debe ser un colaborador global del proyecto
-   * @param throwable 
-   * @returns 
-   */
-
-  async hasProjectMainAccess(projectId: string, userId: string, wholeProject = true, throwable = true) {
-
-    return this.projectServiceQuery.hasProjectAccess(projectId, userId, [CollaboratorRole.ADMIN, CollaboratorRole.MANAGER], wholeProject, throwable);
-
-  }
-
-
-  /**
-   * 
-   * Verifica acceso básico (ADMIN | MANAGER | EMPLOYEE) al proyecto.
-   * 
-   * @param projectId 
-   * @param userId 
-   * @param wholeProject - Si debe ser un colaborador global del proyecto
-   * @param throwable 
-   * @returns 
-   */
-
-  async hasProjectLiteAccess(projectId: string, userId: string, wholeProject = true, throwable = true) {
-
-    return this.projectServiceQuery.hasProjectAccess(projectId, userId, [CollaboratorRole.ADMIN, CollaboratorRole.MANAGER, CollaboratorRole.EMPLOYEE], wholeProject, throwable);
-
-  }
-
-  /**
-   * 
-   * LOS ACCESOS AL NODO YA VERIFICAN SI EL CLIENTE ES COLABORADOR
-   * GLOBAL DEL PROYECTO.
-   * 
-   */
-
-  /**
-   * 
-   * Verifica si el cliente tiene rol ADMIN en el nodo.
-   * 
-   * @param nodeId 
-   * @param userId 
-   * @param throwable 
-   * @returns 
-   */
-
-  async hasNodeAdminAccess(nodeId: string, userId: string, throwable = true) {
-
-    return this.projectServiceQuery.hasNodeAccess(nodeId, userId, [CollaboratorRole.ADMIN], throwable);
-
-  }
-
-  /**
-   * 
-   * Verifica acceso "principal" (ADMIN | MANAGER) al nodo.
-   * 
-   * @param nodeId 
-   * @param userId 
-   * @param throwable 
-   * @returns 
-   */
-
-  async hasNodeMainAccess(nodeId: string, userId: string, throwable = true) {
-
-    return this.projectServiceQuery.hasNodeAccess(nodeId, userId, [CollaboratorRole.ADMIN, CollaboratorRole.MANAGER], throwable);
-
-  }
-
-  /**
-   * 
-   * Verifica acceso básico (ADMIN | MANAGER | EMPLOYEE) al nodo.
-   * 
-   * @param nodeId 
-   * @param userId 
-   * @param throwable 
-   * @returns 
-   */
-
-  async hasNodeLiteAccess(nodeId: string, userId: string, throwable = true) {
-
-    return this.projectServiceQuery.hasNodeAccess(nodeId, userId, [CollaboratorRole.ADMIN, CollaboratorRole.MANAGER, CollaboratorRole.EMPLOYEE], throwable);
-
-  }
 
   /**
    * 
@@ -278,9 +165,6 @@ export class ProjectService {
     nodeId?: string
   ) {
     // VALIDACION BASICA
-
-    if (!projectId && !nodeId) throw new BadRequestException("ProjectId or NodeId are required");
-
     const himselfRelates = await this.collaboratorLinkedToUser(
       clientId,
       collaboratorId,
@@ -291,19 +175,14 @@ export class ProjectService {
 
     // VALIDACION DE ACCESO
 
-    if (projectId) {
-      await Promise.all([
-        this.collaboratorLinkedToProject(collaboratorId, projectId),
-        this.hasProjectAdminAccess(projectId, clientId)
-      ])
-    };
+    if (!nodeId && !projectId) throw new BadRequestException("nodeId or projectId are required");
 
     if (nodeId) {
-      await Promise.all([
-        this.collaboratorLinkedToNode(collaboratorId, nodeId),
-        this.hasNodeAdminAccess(nodeId, clientId)
-      ]);
-    };
+      await this.collaboratorLinkedToNode(collaboratorId, nodeId)
+    } else if (projectId) {
+      await this.collaboratorLinkedToProject(collaboratorId, projectId);
+    }
+
   }
 
   /**
@@ -429,8 +308,9 @@ export class ProjectService {
 
   /**
    * 
-   * Verifica si el usuario esta vinculado (es decir, que es el colaborador) con el id
-   * de colaborador dado.
+   * Verifica si el usuario esta vinculado con el id
+   * de colaborador dado. Es decir, buscamos saber si el colaborador
+   * y el usuario son las mismas personas.
    * 
    * @param userId 
    * @param collaboratorId 
@@ -503,15 +383,12 @@ export class ProjectService {
    */
 
   async createNodes(
-    clientId: string,
     createNodesDto: CreateNodesDto
   ): Promise<{
     ids: string[]
   }> {
 
     const { nodes, projectId } = createNodesDto;
-
-    await this.hasProjectAdminAccess(projectId, clientId)
 
     const nodeDrafts = this.nodeRepo.create(
       nodes.map(node => ({
@@ -559,9 +436,14 @@ export class ProjectService {
       throw new BadRequestException("User can not be equal to collaborator user");
     }
 
-    const [isOwner, existsUser] = await Promise.all([
+    const [isOwner, existsUser, isNodeLinked] = await Promise.all([
       this.isOwnerOfProject(projectId, userId),
-      this.authService.existsUser(userId)
+      this.authService.existsUser(userId),
+      (
+        nodeId
+          ? this.nodeLinkedToProject(nodeId, projectId)
+          : Promise.resolve(null)
+      )
     ]);
 
     if (isOwner) {
@@ -572,15 +454,8 @@ export class ProjectService {
       throw new BadRequestException("User does not exist");
     }
 
-    /* ================= CONTROL DE ACCESO ================= */
-
-    if (nodeId) {
-      await Promise.all([
-        this.nodeLinkedToProject(nodeId, projectId),
-        this.hasNodeMainAccess(nodeId, clientId)
-      ]);
-    } else {
-      await this.hasProjectMainAccess(projectId, clientId);
+    if (nodeId && !isNodeLinked) {
+      throw new BadRequestException("Node does not correspond toward project");
     }
 
     /* ================= DUPLICADOS ================= */
@@ -641,12 +516,9 @@ export class ProjectService {
    */
 
   async updateProject(
-    clientId: string,
     projectId: string,
     updateProjectDto: UpdateProjectDto
   ) {
-
-    await this.hasProjectAdminAccess(projectId, clientId);
 
     await this.projectRepo.update(projectId, updateProjectDto);
 
@@ -664,11 +536,9 @@ export class ProjectService {
    */
 
   async updateNode(
-    clientId: string,
     nodeId: string,
     updateNodeDto: UpdateNodeDto
   ) {
-    await this.hasNodeAdminAccess(nodeId, clientId);
 
     return this.nodeRepo.update(nodeId, {
       ...updateNodeDto
@@ -723,11 +593,8 @@ export class ProjectService {
 
 
   async deleteProject(
-    clientId: string,
     projectId: string
   ) {
-
-    this.hasProjectAdminAccess(projectId, clientId);
 
     return this.projectRepo.delete({
       id: projectId
@@ -736,11 +603,8 @@ export class ProjectService {
   }
 
   async deleteNode(
-    clientId: string,
     nodeId: string
   ) {
-
-    this.hasNodeAdminAccess(nodeId, clientId);
 
     return this.nodeRepo.delete({
       id: nodeId
@@ -789,18 +653,18 @@ export class ProjectService {
    */
 
   async getProjectsByOwner(
-    user: string,
+    clientId: string,
     query: GetProjectsQueryDto
   ) {
 
-    const { selectNodes, selectCollaborators, nodeSelector } = query;
+    const { selectNodes, selectCollaborators, nodeId } = query;
 
     const qb = await this.projectServiceQuery.getProjectsQueryBuilder(
-      user,
+      clientId,
       ParticipationFilter.OWNER,
       selectCollaborators,
       selectNodes,
-      nodeSelector
+      nodeId
     )
 
     return qb.getMany();
@@ -819,18 +683,18 @@ export class ProjectService {
    */
 
   async getProjectsByCollaborator(
-    user: string,
+    clientId: string,
     query: GetProjectsQueryDto
   ) {
 
-    const { selectNodes, selectCollaborators, nodeSelector } = query;
+    const { selectNodes, selectCollaborators, nodeId } = query;
 
     const qb = await this.projectServiceQuery.getProjectsQueryBuilder(
-      user,
+      clientId,
       ParticipationFilter.COLLABORATOR,
       selectCollaborators,
       selectNodes,
-      nodeSelector
+      nodeId
     )
 
 
@@ -844,20 +708,13 @@ export class ProjectService {
    * 
    * @param user 
    * @param query 
-   * @returns {
-   *  ownProjects: Project[],
-   *  collaboratedProjects: Project[]
-   * }
+   * @returns
    */
 
   async getProjects(
     clientId: string,
     query: GetProjectsQueryDto
   ) {
-
-    const { nodeSelector } = query;
-
-    if (nodeSelector) await this.hasNodeLiteAccess(nodeSelector, clientId);
 
     return {
       ownProjects: await this.getProjectsByOwner(clientId, query),
@@ -889,7 +746,7 @@ export class ProjectService {
 
     const { selectNodes, selectCollaborators } = query;
 
-    if(selectCollaborators) await this.hasProjectLiteAccess(projectId, clientId, false);
+    if (selectCollaborators) await this.accessService.hasProjectLiteAccess(projectId, clientId, false);
 
     const initialQb = this.projectRepo.createQueryBuilder("project")
       .where("project.id = :projectId", { projectId });
@@ -920,14 +777,14 @@ export class ProjectService {
    */
 
   async getNode(
-    clientId : string,
+    clientId: string,
     nodeId: string,
     query: GetNodeQueryDto
   ) {
 
     const { selectProject, selectCollaborators } = query;
 
-    if(selectCollaborators) await this.hasNodeLiteAccess(nodeId, clientId);
+    if (selectCollaborators) await this.accessService.hasNodeLiteAccess(nodeId, clientId);
 
     const relations = {
       ...(selectProject && { project: true }),
@@ -957,23 +814,23 @@ export class ProjectService {
    */
 
   async getCollaborators(
-    clientId : string,
     query: GetCollaboratorsQueryDto
   ) {
 
-    const { projectSelector, nodeSelector } = query;
+    const { nodeId, projectId } = query;
 
-    if (!projectSelector && !nodeSelector) throw new BadRequestException("ProjectSelector or NodeSelector is required");
+    if (!projectId && !nodeId) throw new BadRequestException("ProjectId or NodeId is required");
 
-    //TODO : OPTIMIZE
+    const where : any = {}
 
-    if (projectSelector) await this.hasProjectLiteAccess(projectSelector, clientId);
-
-    if (nodeSelector) await this.hasNodeLiteAccess(nodeSelector, clientId);
-
-    const where = {
-      ...(projectSelector && { project: { id: projectSelector } }),
-      ...(nodeSelector && { node: { id: nodeSelector } })
+    if(nodeId){
+      where.node = {
+        id : nodeId
+      }
+    }else{
+      where.project = {
+        id : projectId
+      }
     }
 
     return this.collaboratorRepo.find({
@@ -1015,6 +872,6 @@ export class ProjectService {
     })
 
   }
-  
+
 
 }

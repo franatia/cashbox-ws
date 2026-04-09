@@ -23,8 +23,7 @@ import { BillModule } from './bill/bill.module';
 import { TaxModule } from './tax/tax.module';
 import { PaymentModule } from './payment/payment.module';
 import { CostsModule } from './costs/costs.module';
-import { APP_GUARD } from '@nestjs/core';
-import { JwtRefreshGuard } from './auth/guards/jwt.guard';
+import { AccessModule } from './access/access.module';
 
 @Module({
   imports: [
@@ -72,7 +71,8 @@ import { JwtRefreshGuard } from './auth/guards/jwt.guard';
     BillModule,
     TaxModule,
     PaymentModule,
-    CostsModule
+    CostsModule,
+    AccessModule
   ],
   controllers: [AppController],
   providers: [

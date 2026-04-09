@@ -1,13 +1,19 @@
+import { AtLeastOne } from "@/common/decorators/validator/class-validator.decorator";
 import { IsOptional, IsUUID } from "class-validator";
 
 export default class GetCollaboratorsQueryDto {
 
     @IsOptional()
     @IsUUID()
-    projectSelector !: string | undefined;
-    
+    projectId !: string | undefined;
+
     @IsOptional()
     @IsUUID()
-    nodeSelector !: string | undefined;
+    nodeId !: string | undefined;
+
+    @AtLeastOne(['projectId', 'nodeId'], {
+        message: 'projectId or nodeId is required',
+    })
+    dummyProperty?: any;
 
 }

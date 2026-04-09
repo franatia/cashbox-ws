@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Query, ParseUUIDPipe, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Query, ParseUUIDPipe, Delete, UseGuards } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { Paths } from './constants/paths.enum';
@@ -14,6 +14,12 @@ import GetCollaboratorsQueryDto from './dto/get-collaborators-query.dto';
 import UpdateCollaboratorDto from './dto/update-collaborator.dto';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import DeleteCollaboratorDto from './dto/delete-collaborator.dto';
+import { Public } from '@/common/decorators/public.decorator';
+import { AccessConfig, AccessPolicies, FirstMatchAccess, FreeNullAccess } from '@/access/decorators/access.decorator';
+import { ProjectAdminPolicie } from '@/access/policies/project/admin.policie';
+import { NodeAdminPolicie } from '@/access/policies/node/admin.policie';
+import { NodeLitePolicie } from '@/access/policies/node/lite.policie';
+import { ProjectLitePolicie } from '@/access/policies/project/lite.policie';
 
 @Controller('projects')
 export class ProjectController {
@@ -35,6 +41,7 @@ export class ProjectController {
    * @returns 
    */
 
+  @Public()
   @Post()
   createProject(
     @CurrentUser() clientId: string,
@@ -55,14 +62,15 @@ export class ProjectController {
    * @returns 
    */
 
+  @AccessPolicies(
+    ProjectAdminPolicie
+  )
   @Post(Paths.NODES)
   createNodes(
-    @CurrentUser() clientId: string,
     @Body() createNodesDto: CreateNodesDto
   ) {
 
     return this.projectService.createNodes(
-      clientId,
       createNodesDto
     );
 
@@ -77,6 +85,14 @@ export class ProjectController {
    * @returns 
    */
 
+  @AccessPolicies(
+    NodeAdminPolicie,
+    ProjectAdminPolicie
+  )
+  @AccessConfig(
+    FreeNullAccess,
+    FirstMatchAccess
+  )
   @Post(Paths.COLLABORATORS)
   createCollaborator(
     @CurrentUser() clientId: string,
@@ -100,15 +116,16 @@ export class ProjectController {
    * @returns 
    */
 
+  @AccessPolicies(
+    NodeAdminPolicie
+  )
   @Put(joinPaths(Paths.NODES, Paths.PARAM_NODE_ID))
   updateNode(
-    @CurrentUser() clientId: string,
     @Param("nodeId", new ParseUUIDPipe()) nodeId: string,
     @Body() dto: UpdateNodeDto,
   ) {
 
     return this.projectService.updateNode(
-      clientId,
       nodeId,
       dto
     )
@@ -125,6 +142,14 @@ export class ProjectController {
    * @returns 
    */
 
+  @AccessPolicies(
+    NodeAdminPolicie,
+    ProjectAdminPolicie
+  )
+  @AccessConfig(
+    FreeNullAccess,
+    FirstMatchAccess
+  )
   @Put(joinPaths(Paths.COLLABORATORS, Paths.PARAM_COLLABORATOR_ID))
   updateCollaborator(
     @CurrentUser() clientId : string,
@@ -150,15 +175,16 @@ export class ProjectController {
    * @returns 
    */
 
+  @AccessPolicies(
+    ProjectAdminPolicie
+  )
   @Put(Paths.PARAM_PROJECT_ID)
   updateProject(
-    @CurrentUser() clientId: string,
     @Param("projectId", new ParseUUIDPipe()) projectId: string,
     @Body() dto: UpdateProjectDto,
   ) {
 
     return this.projectService.updateProject(
-      clientId,
       projectId,
       dto
     )
@@ -180,14 +206,15 @@ export class ProjectController {
    * @returns 
    */
 
+  @AccessPolicies(
+    NodeAdminPolicie
+  )
   @Delete(joinPaths(Paths.NODES, Paths.PARAM_NODE_ID))
   deleteNode(
-    @CurrentUser() clientId : string,
     @Param("nodeId") nodeId : string
   ){
 
     return this.projectService.deleteNode(
-      clientId,
       nodeId
     )
 
@@ -203,6 +230,14 @@ export class ProjectController {
    * @returns 
    */
 
+  @AccessPolicies(
+    NodeAdminPolicie,
+    ProjectAdminPolicie
+  )
+  @AccessConfig(
+    FirstMatchAccess,
+    FreeNullAccess
+  )
   @Delete(joinPaths(Paths.COLLABORATORS, Paths.PARAM_COLLABORATOR_ID))
   deleteCollaborator(
     @CurrentUser() clientId : string,
@@ -227,14 +262,15 @@ export class ProjectController {
    * @returns 
    */
 
+  @AccessPolicies(
+    ProjectAdminPolicie
+  )
   @Delete(Paths.PARAM_PROJECT_ID)
   deleteProject(
-    @CurrentUser() clientId : string,
     @Param("projectId") projectId : string
   ){
 
     return this.projectService.deleteProject(
-      clientId,
       projectId
     )
 
@@ -255,6 +291,10 @@ export class ProjectController {
    * @returns 
    */
 
+  @AccessPolicies(
+    NodeLitePolicie
+  )
+  @AccessConfig(FreeNullAccess)
   @Get()
   getProjects(
     @CurrentUser() clientId: string,
@@ -303,14 +343,20 @@ export class ProjectController {
    * @returns 
    */
 
+  @AccessPolicies(
+    NodeLitePolicie,
+    ProjectLitePolicie
+  )
+  @AccessConfig(
+    FirstMatchAccess,
+    FreeNullAccess
+  )
   @Get(Paths.COLLABORATORS)
   getCollaborators(
-    @CurrentUser() clientId : string,
     @Query() query : GetCollaboratorsQueryDto
   ){
 
     return this.projectService.getCollaborators(
-      clientId,
       query
     )
 
