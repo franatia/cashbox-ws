@@ -1,8 +1,6 @@
 import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
-import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Rule } from "./rule.entity";
-import { Price } from "@/price/entities/price.entity";
-import { RuleEffectSelector } from "./rule-effect-selector.entity";
 
 export enum RuleEffectType {
     ENABLE_PRODUCT = "ENABLE_PRODUCT",
@@ -10,6 +8,10 @@ export enum RuleEffectType {
     ACTIVE_PRICE = "ACTIVE_PRICE",
     PRODUCT_PERCENT_DISCOUNT = "PRODUCT_PERCENT_DISCOUNT",
     PRODUCT_CASH_DISCOUNT = "PRODUCT_CASH_DISCOUNT",
+    PRODUCT_GROUP_PERCENT_DISCOUNT = "PRODUCT_GROUP_PERCENT_DISCOUNT",
+    PRODUCT_GROUP_CASH_DISCOUNT = "PRODUCT_GROUP_CASH_DISCOUNT",
+    PRODUCT_ITEM_GROUP_PERCENT_DISCOUNT = "PRODUCT_ITEM_GROUP_PERCENT_DISCOUNT",
+    PRODUCT_ITEM_GROUP_CASH_DISCOUNT = "PRODUCT_ITEM_GROUP_CASH_DISCOUNT",
     PRICE_PERCENT_DISCOUNT = "PRICE_PERCENT_DISCOUNT",
     PRICE_CASH_DISCOUNT = "PRICE_CASH_DISCOUNT",
     CART_PERCENT_DISCOUNT = "CART_PERCENT_DISCOUNT",
@@ -41,26 +43,13 @@ export class RuleEffect {
     )
     rule !: Rule;
 
-    @ManyToOne(
-        () => Price,
-        {
-            eager: false,
-            nullable: true
-        }
-    )
-    price !: Price | null;
+    @Column({
+        type: "uuid"
+    })
+    entityId !: string;
 
     @Column({
         type: "text"
     })
     value !: string
-
-    @OneToMany(
-        () => RuleEffectSelector,
-        selector => selector.effect,
-        {
-            eager: false
-        }
-    )
-    selectors !: RuleEffectSelector[];
 }

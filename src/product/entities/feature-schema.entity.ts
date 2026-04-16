@@ -1,6 +1,7 @@
 import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { FeatureSchemaItem } from "./feature-schema-item.entity";
+import { Project } from "@/projects/entities/project.entity";
 
 @Entity({
     schema: DatabaseSchemas.main,
@@ -25,6 +26,15 @@ export class FeatureSchema {
     )
     items !: string[];
 
-
+    @ManyToOne(
+        () => Project,
+        project => project.featureSchemas,
+        {
+            eager: false,
+            onDelete: "CASCADE",
+            nullable: false
+        }
+    )
+    project !: Project;
     
 }

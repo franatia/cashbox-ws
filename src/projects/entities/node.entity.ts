@@ -40,12 +40,11 @@ export class Node {
     )
     cashbox!: Cashbox;
 
-    @ManyToMany(
+    @OneToMany(
         () => Collaborator,
-        collaborator => collaborator.nodes,
+        collaborator => collaborator.node,
         {
-            eager: false,
-            nullable: false
+            eager: false
         }
     )
     collaborators!: Collaborator[];

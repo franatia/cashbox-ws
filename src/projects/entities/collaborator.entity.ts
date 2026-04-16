@@ -6,6 +6,7 @@ import { Node } from "./node.entity";
 
 export enum CollaboratorRole {
     ADMIN = "ADMIN",
+    MANAGER = "MANAGER",
     EMPLOYEE = "EMPLOYEE"
 }
 
@@ -33,28 +34,21 @@ export class Collaborator {
     )
     project!: Project
 
-    @ManyToMany(
+    @ManyToOne(
         () => Node,
         node => node.collaborators,
         {
             eager: false,
-            nullable: false
+            nullable: true
         }
     )
-    @JoinColumn()
-    nodes!: Node[]
+    node !: Node | undefined;
 
     @Column({
         type: "enum",
         enum: CollaboratorRole,
         default: CollaboratorRole.EMPLOYEE
     })
-    role!: CollaboratorRole
-
-    @Column({
-        type: "bool",
-        default: false
-    })
-    allAccess!: boolean
+    role!: CollaboratorRole;
     
 }

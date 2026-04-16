@@ -11,8 +11,8 @@ export enum ComposityItemType {
 }
 
 @Entity({
-    database: DatabaseSchemas.main,
-    name: "composity-items"
+    schema: DatabaseSchemas.main,
+    name: "composity-items",
 })
 export class ComposityItem {
 

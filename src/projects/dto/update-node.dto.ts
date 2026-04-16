@@ -1,3 +1,3 @@
-import { CreateNodeDto } from "./create-node.dto";
+import { NodeDto } from "./node.dto";
 
-export class UpdateNodeDto extends CreateNodeDto {}
+export class UpdateNodeDto extends NodeDto {}

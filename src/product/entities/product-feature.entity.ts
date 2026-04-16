@@ -5,6 +5,7 @@ import { Product } from "./product.entity";
 import { FeatureSchema } from "./feature-schema.entity";
 
 @Entity({
+    schema : DatabaseSchemas.main,
     name: "product-features"
 })
 export class ProductFeature {

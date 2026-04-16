@@ -1,6 +1,7 @@
 import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
 import { Project } from "@/projects/entities/project.entity";
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Customer } from "./customer.entity";
 
 @Entity({
     schema: DatabaseSchemas.main,
@@ -30,6 +31,15 @@ export class CustomerSegment {
         type: "text"
     })
     ruleTree !: string;
+
+    @ManyToMany(
+        () => Customer,
+        {
+            eager: false
+        }
+    )
+    @JoinTable()
+    customers !: Customer[];
 
     @Column({
         type: "bool"

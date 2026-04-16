@@ -5,11 +5,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Rule } from './entities/rule.entity';
 import { RuleCondition } from './entities/rule-condition.entity';
 import { RuleEffect } from './entities/rule-effect.entity';
-import { RuleEffectSelector } from './entities/rule-effect-selector.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Rule, RuleCondition, RuleEffect, RuleEffectSelector])
+    TypeOrmModule.forFeature([Rule, RuleCondition, RuleEffect])
   ],
   controllers: [RuleController],
   providers: [RuleService],

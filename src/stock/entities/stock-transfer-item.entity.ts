@@ -1,7 +1,8 @@
 import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { StockTransfer } from "./stock-transfer.entity";
 import { ProductItem } from "@/product/entities/product-item.entity";
+import { StockMovement } from "./stock-movement.entity";
 
 @Entity({
     schema: DatabaseSchemas.main,
@@ -21,6 +22,15 @@ export class StockTransferItem {
         }
     )
     transfer!: StockTransfer[];
+
+    @OneToMany(
+        () => StockMovement,
+        stockMovement => stockMovement.transfer,
+        {
+            eager: false,
+        }
+    )
+    stockMovements!: StockMovement[];
 
     @ManyToOne(
         () => ProductItem,

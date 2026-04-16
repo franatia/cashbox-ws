@@ -11,7 +11,7 @@ import AuthEmailDto from './dto/auth-email.dto';
 import type JwtAuthEmailPayload from './interfaces/jwt-auth-email-payload.interface';
 import AuthDto from './dto/auth.dto';
 import { VerifyEmailGuard } from './guards/auth.guard';
-import { Public } from './decorators/public.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { Paths } from './constants/paths.enums';
 
 @Public()
