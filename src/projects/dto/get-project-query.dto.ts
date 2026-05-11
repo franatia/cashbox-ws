@@ -10,5 +10,6 @@ export class GetProjectQueryDto {
 
     @IsOptional()
     @IsBoolean()
+    @Type(() => Boolean)
     selectCollaborators !: boolean;
 }

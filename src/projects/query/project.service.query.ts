@@ -1,6 +1,6 @@
 import { Brackets, Repository, SelectQueryBuilder } from "typeorm";
 import { Project } from "../entities/project.entity";
-import { WhereExpressionBuilder } from "typeorm/browser";
+import { WhereExpressionBuilder } from "typeorm";
 import { CollaboratorRole } from "../entities/collaborator.entity";
 import { ForbiddenException, Injectable } from "@nestjs/common";
 import { Node } from "../entities/node.entity";
@@ -20,9 +20,6 @@ export class ProjectServiceQuery {
     constructor(
         @InjectRepository(Project)
         private readonly projectRepo: Repository<Project>,
-        
-        @InjectRepository(Node)
-        private readonly nodeRepo: Repository<Node>
     ) { }
 
     /**

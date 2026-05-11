@@ -1,28 +1,35 @@
 import { AccessService } from "@/access/access.service";
 import { AccessConfigMetadata } from "@/access/decorators/access.decorator";
-import { extractFromRequest } from "@/access/helpers/request";
-import { BadRequestException, ExecutionContext } from "@nestjs/common";
+import { policieValidator } from "@/access/helpers/policie";
+import { Policie, PoliciePayload } from "../policie";
 
-export const NodeAdminPolicie = async (
-    ctx: ExecutionContext,
-    accessService: AccessService,
-    accessConfig : AccessConfigMetadata
-) => {
-    const request = ctx.switchToHttp().getRequest();
+export class NodeAdminPolicie extends Policie {
+    async verify(
+        payload: PoliciePayload,
+        accessService: AccessService,
+        accessConfig: AccessConfigMetadata
+    ): Promise<boolean> {
 
-    const user = request.user;
+        const {
+            token
+        } = payload;
 
-    const {freeNull = false} = accessConfig;
+        const {
+            sub : user,
+            context
+        } = token;
 
-    const nodeId = extractFromRequest(request, "nodeId");
-
-    if(!nodeId && !freeNull) throw new BadRequestException("nodeId is required");
-
-    if(nodeId){
-        await accessService.hasNodeAdminAccess(
-            nodeId, 
-            user
-        );
+        return await policieValidator(
+            accessConfig,
+            context,
+            "nodeId",
+            ([value]) => {
+                return accessService.hasNodeAdminAccess(
+                    value,
+                    user
+                );
+            }
+        )
     }
 
 }

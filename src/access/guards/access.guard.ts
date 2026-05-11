@@ -1,8 +1,19 @@
-import { CanActivate, ExecutionContext, Inject, Injectable, InternalServerErrorException } from "@nestjs/common";
+import { CanActivate, ExecutionContext, ForbiddenException, Inject, Injectable, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { AccessService } from "../access.service";
-import { ACCESS_CONFIG, AccessConfigMetadata } from "@/access/decorators/access.decorator";
+import { ACCESS_CONFIG_KEY, ACCESS_POLICIES_KEY, AccessConfigMetadata } from "@/access/decorators/access.decorator";
 import { IS_PUBLIC_KEY } from "@/common/decorators/public.decorator";
+import { AuthService } from "@/auth/auth.service";
+import { HeaderKeys } from "@/common/constants/header-keys.enum";
+import { ConfigService } from "@nestjs/config";
+import Configuration from "@/config/interfaces/configuration.interface";
+import { JwtService } from "@nestjs/jwt";
+import JwtRefreshPayload from "@/auth/interfaces/jwt-refresh-payload.interface";
+import { AuthStage } from "@/auth/enums/auth-stage.enum";
+import { Policie } from "../policies/policie";
+import { Class } from "@/common/types/class.type";
+import { AUTH_TYPE_KEY } from "@/auth/decorators/auth.decorator";
+import { AuthType } from "@/auth/enums/auth-type.enum";
 
 /**
  * 
@@ -16,39 +27,89 @@ import { IS_PUBLIC_KEY } from "@/common/decorators/public.decorator";
 export class AccessGuard implements CanActivate {
     constructor(
         private readonly reflector: Reflector,
-        private readonly accessService: AccessService
+
+        private readonly accessService: AccessService,
     ) { }
 
-    async canActivate(context: ExecutionContext): Promise<boolean> {
-        
-        const isPublic = this.reflector.getAllAndOverride<boolean>(
-            IS_PUBLIC_KEY,
-            [context.getHandler(), context.getClass()],
+    private getMetadata<T>(
+        metadataKey: string,
+        context: ExecutionContext
+    ): T {
+        return this.reflector.getAllAndOverride<T>(
+            metadataKey,
+            [context.getHandler(), context.getClass()]
+        )
+    }
+
+    private skip(
+        context: ExecutionContext
+    ) {
+
+        const authType = this.getMetadata<AuthType>(
+            AUTH_TYPE_KEY,
+            context
         );
 
-        if(isPublic) return true;
-        
-        const config = this.reflector.getAllAndOverride<AccessConfigMetadata>(
-            ACCESS_CONFIG,
-            [context.getHandler(), context.getClass()],
-        ) ?? {};
+        const skip = authType !== undefined && authType !== AuthType.REFRESH;
 
-        const policies = this.reflector.getAllAndOverride<Function[]>(
-            "access-policies",
-            [context.getHandler(), context.getClass()],
-        ) ?? [];
+        return skip;
+    }
 
-        const {firstMatch = false} = config;
+    private getConfig(
+        context: ExecutionContext
+    ): AccessConfigMetadata {
+        return this.getMetadata<AccessConfigMetadata>(
+            ACCESS_CONFIG_KEY,
+            context
+        ) ?? {}
+    }
 
-        for(const policy of policies){
-            try {
-                await policy(context, this.accessService, config);
-                if(firstMatch) return true;
-            } catch (error) {
-                if(firstMatch) continue;
-                throw error;
+    private getPolicies(
+        context: ExecutionContext
+    ): Class<Policie>[] {
+        return this.getMetadata<Class<Policie>[]>(
+            ACCESS_POLICIES_KEY,
+            context
+        ) ?? []
+    }
+
+    private async runPolicies(
+        context: ExecutionContext
+    ) {
+
+        const policies = this.getPolicies(context);
+        const config = this.getConfig(context);
+
+        const { firstMatch = false } = config;
+
+        for (let i = 0; i < policies.length; i++) {
+
+            const policie = policies[i];
+            const isLast = i === policies.length - 1;
+
+            const instance = new policie();
+            const verified = await instance.run(
+                context, 
+                this.accessService, 
+                config
+            );
+
+            if (firstMatch && verified) break;
+
+            if (firstMatch && isLast) {
+                throw new ForbiddenException("Nothing was verified");
             }
         }
+
+
+    }
+
+    async canActivate(context: ExecutionContext): Promise<boolean> {
+
+        const skip = this.skip(context);
+        if (skip) return true;
+
+        await this.runPolicies(context);
 
         return true;
 

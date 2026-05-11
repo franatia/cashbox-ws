@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, GoneException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, forwardRef, GoneException, Inject, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EmailToken, User } from './entities';
 import { FindOneOptions, FindOptionsWhere, Repository } from 'typeorm';
@@ -15,6 +15,9 @@ import { AuthStage } from '@/auth/enums/auth-stage.enum';
 import LogInDto from './dto/log-in.dto';
 import AuthDto from './dto/auth.dto';
 import AuthEmailDto from './dto/auth-email.dto';
+import AuthProjectContextDto from './dto/auth-project-context.dto';
+import JwtRefreshPayload from './interfaces/jwt-refresh-payload.interface';
+import { ProjectService } from '@/projects/project.service';
 
 @Injectable()
 export class AuthService {
@@ -27,17 +30,20 @@ export class AuthService {
     private readonly emailTokenRepo: Repository<EmailToken>,
 
     private readonly mailManager: MailManager,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+
+    @Inject(forwardRef(() => ProjectService))
+    private readonly projectService: ProjectService
   ) { }
 
-  async findUser(payload: FindOptionsWhere<User>){
+  async findUser(payload: FindOptionsWhere<User>) {
     return await this.userRepo.createQueryBuilder("user")
       .addSelect("user.password")
       .where(payload)
       .getOne();
   }
 
-  async existsUser(id : string){
+  async existsUser(id: string) {
     return await this.userRepo.exists({
       where: {
         id
@@ -45,8 +51,8 @@ export class AuthService {
     })
   }
 
-  private async generateJwt(payload: object, expiresIn: StringValue): Promise<string> {
-    return await this.jwtService.signAsync(payload, {
+  private async generateJwt<T>(payload: T, expiresIn: StringValue): Promise<string> {
+    return await this.jwtService.signAsync(payload as any, {
       expiresIn
     })
   }
@@ -160,21 +166,22 @@ export class AuthService {
 
   }
 
-  async logIn(logInDto: LogInDto, user: User | null) {
+  async logIn(logInDto: LogInDto, userId: string | null) {
 
     const { email, password } = logInDto;
-    let userSnapshot = user ?? await this.findUser({
-      email
+    const user = await this.findUser({
+      email,
+      ...(userId && ({ id: userId }))
     })
 
-    const isMatch = await match(password, userSnapshot!.password)
+    const isMatch = await match(password, user!.password)
 
     if (!isMatch) throw new BadRequestException("Password is not valid");
 
     const { isAuth, stage, expiresIn } = buildAuthPayloadByUser(user);
 
     const token = await this.generateJwt({
-      sub: userSnapshot?.id,
+      sub: user?.id,
       stage
     }, expiresIn);
 
@@ -183,8 +190,8 @@ export class AuthService {
       isAuth
     }
 
-    if (!isAuth){
-      await this.sendEmailToken(userSnapshot!.email);
+    if (!isAuth) {
+      await this.sendEmailToken(user!.email);
       payloadReturn["send"] = true;
     }
 
@@ -197,16 +204,56 @@ export class AuthService {
 
     await this.verifyEmailToken(user.email, token);
 
-    const { expiresIn, stage } = buildAuthPayloadByUser(user);
-
-    const refreshToken = await this.generateJwt({
+    const refreshToken = await this.generateJwt<JwtRefreshPayload>({
       sub: user.id,
-      stage
-    }, expiresIn)
+      stage : AuthStage.logged
+    }, "30d")
 
     return {
       refreshToken
     };
 
   }
+
+  async authProjectContext(
+    userId: string,
+    dto: AuthProjectContextDto
+  ) {
+
+    const {
+      projectId,
+      nodeId
+    } = dto;
+
+    const isCollaborator = await this.projectService.isCollaborator(
+      userId,
+      projectId,
+      nodeId
+    )
+
+    const isOwner = await this.projectService.isOwnerOfProject(
+      projectId,
+      userId
+    );
+
+    if (!isOwner && !isCollaborator) {
+      throw new UnauthorizedException("El usuario no es propietario ni colaborador del proyecto o nodo");
+    }
+
+
+    const refreshToken = await this.generateJwt<JwtRefreshPayload>({
+      stage: AuthStage.logged,
+      sub: userId,
+      context: {
+        nodeId,
+        projectId
+      }
+    }, "30d");
+
+    return {
+      refreshToken
+    }
+
+  }
+
 }

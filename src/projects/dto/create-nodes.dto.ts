@@ -10,7 +10,4 @@ export class CreateNodesDto {
     @Type(() => NodeDto)
     nodes !: NodeDto[];
 
-    @IsUUID()
-    projectId !: string;
-
 }

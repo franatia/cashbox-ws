@@ -1,4 +1,7 @@
 export enum DatabaseSchemas {
     auth = "auth",
-    main = "main"
+    main = "main",
+    product="product",
+    project="project",
+    catalog="catalog"
 }

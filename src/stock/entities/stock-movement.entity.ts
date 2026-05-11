@@ -6,6 +6,13 @@ import { MovementDirection } from "@/common/constants/movement-direction.enum";
 import { Lot } from "./lot.entity";
 import { StockTransferItem } from "./stock-transfer-item.entity";
 
+export enum MovementReason {
+    SELL = "SELL",
+    WITHDRAWAL = "WITHDRAWAL",
+    TRANSFER = "TRANSFER",
+    PRODUCTION = "PRODUCTION"
+}
+
 @Entity({
     schema: DatabaseSchemas.main,
     name: "stock-movements"
@@ -60,13 +67,19 @@ export class StockMovement {
             nullable: true
         }
     )
-    lot !: Lot | null;
+    createdLot !: Lot | null;
 
     @Column({
         type: "enum",
         enum: MovementDirection
     })
     direction !: MovementDirection;
+
+    @Column({
+        type : "enum",
+        enum : MovementReason
+    })
+    reason !: MovementReason;
 
     @CreateDateColumn({
         type: "timestamptz"

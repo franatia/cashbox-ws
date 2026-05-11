@@ -30,19 +30,17 @@ export default class JwtAuthStrategy extends PassportStrategy(Strategy, JwtTypes
     }
 
 
-    async validate(payload: JwtAuthPayload): Promise<User> {
+    async validate(payload: JwtAuthPayload): Promise<JwtAuthPayload> {
 
         const { sub: id, stage } = payload;
 
         if (stage !== AuthStage.auth) throw new UnauthorizedException("Invalid token");
 
-        const user = await this.authService.findUser({
-            id
-        })
+        const isExists = await this.authService.existsUser(id);
 
-        if (!user) throw new GoneException("User does not exists");
+        if (!isExists) throw new GoneException("User does not exists");
 
-        return user;
+        return payload;
 
     }
 }

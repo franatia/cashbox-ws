@@ -1,7 +1,7 @@
 import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
 import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { StockTransfer } from "./stock-transfer.entity";
-import { ProductItem } from "@/product/entities/product-item.entity";
+import { Item } from "@/product/entities/item.entity";
 import { StockMovement } from "./stock-movement.entity";
 
 @Entity({
@@ -21,7 +21,11 @@ export class StockTransferItem {
             onDelete: "CASCADE"
         }
     )
-    transfer!: StockTransfer[];
+    transfer!: StockTransfer;
+
+    // TODO: Crear relacion intermedia para agrupar los stockMovements
+    // Que tengo sourceMovement targetMovement o asi, para darle un orden
+    // Sino recibo tanto movimientos de egreso como ingreso y nose cual es cual
 
     @OneToMany(
         () => StockMovement,
@@ -33,12 +37,12 @@ export class StockTransferItem {
     stockMovements!: StockMovement[];
 
     @ManyToOne(
-        () => ProductItem,
+        () => Item,
         {
             eager: false
         }
     )
-    productItem!: ProductItem;
+    productItem!: Item;
 
     @Column({
         type: "int"

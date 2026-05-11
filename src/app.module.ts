@@ -24,6 +24,9 @@ import { TaxModule } from './tax/tax.module';
 import { PaymentModule } from './payment/payment.module';
 import { CostsModule } from './costs/costs.module';
 import { AccessModule } from './access/access.module';
+import { RelationsModule } from './relations/relations.module';
+import { FeatureSchemaModule } from './feature-schema/feature-schema.module';
+import { CatalogModule } from './catalog/catalog.module';
 
 @Module({
   imports: [
@@ -42,16 +45,19 @@ import { AccessModule } from './access/access.module';
         const appConfig = config.get<Configuration["app"]>("app")!;
 
         const isDevelopment = appConfig.env === Environment.development;
-        
+
         return ({
           type: 'postgres',
 
           ...databaseConfig,
-          
+
           synchronize: isDevelopment,
           logging: isDevelopment,
           migrationsRun: !isDevelopment,
-          autoLoadEntities: true
+          autoLoadEntities: true,
+          extra: {
+            options: "-c search_path=main,auth,public"
+          }
         })
       }
     }),
@@ -72,7 +78,10 @@ import { AccessModule } from './access/access.module';
     TaxModule,
     PaymentModule,
     CostsModule,
-    AccessModule
+    AccessModule,
+    RelationsModule,
+    FeatureSchemaModule,
+    CatalogModule
   ],
   controllers: [AppController],
   providers: [

@@ -6,14 +6,11 @@ export default class CreateCollaboratorDto {
     @IsUUID()
     userId !: string;
 
-    @IsUUID()
-    projectId !: string;
-
-    @IsUUID()
-    @IsOptional()
-    nodeId !: string | undefined;
-
     @IsEnum(CollaboratorRole)
     role !: CollaboratorRole;
+
+    @IsOptional()
+    @IsUUID()
+    nodeId ?: string;
    
 }

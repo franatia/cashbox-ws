@@ -12,10 +12,9 @@ import { AccessModule } from '@/access/access.module';
 
 @Module({
   imports: [
-    forwardRef(() => AccessModule),
+    forwardRef(() => AuthModule),
     TypeOrmModule.forFeature([Project, Node, Collaborator]),
-    CashboxModule,
-    AuthModule
+    CashboxModule
   ],
   controllers: [ProjectController],
   providers: [ProjectService, ProjectServiceQuery],

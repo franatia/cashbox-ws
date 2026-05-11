@@ -1,29 +1,39 @@
 import { AccessService } from "@/access/access.service";
 import { AccessConfigMetadata } from "@/access/decorators/access.decorator";
-import { extractFromRequest } from "@/access/helpers/request";
-import { BadRequestException, ExecutionContext } from "@nestjs/common";
+import { policieValidator } from "@/access/helpers/policie";
+import { Policie, PoliciePayload } from "../policie";
 
-export const ProjectLitePolicie = async (
-    ctx: ExecutionContext,
-    accessService: AccessService,
-    accessConfig : AccessConfigMetadata
-) => {
-    const request = ctx.switchToHttp().getRequest();
+export class ProjectLitePolicie extends Policie {
 
-    const user = request.user;
+    async verify(
+        payload : PoliciePayload,
+        accessService: AccessService,
+        accessConfig: AccessConfigMetadata
+    ): Promise<boolean> {
 
-    const {freeNull = false, wholeProject = true} = accessConfig;
+        const {
+            token
+        } = payload;
 
-    const projectId = extractFromRequest(request, "projectId");
+        const {
+            sub : user,
+            context
+        } = token;
 
-    if(!projectId && !freeNull) throw new BadRequestException("projectId is required");
+        const { wholeProject = true } = accessConfig;
 
-    if(projectId){
-        await accessService.hasProjectLiteAccess(
-            projectId, 
-            user,
-            wholeProject
-        );
+        return await policieValidator(
+            accessConfig,
+            context,
+            "projectId",
+            ([value]) => {
+                return accessService.hasProjectLiteAccess(
+                    value,
+                    user,
+                    wholeProject
+                );
+            }
+        )
     }
 
 }

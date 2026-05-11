@@ -169,7 +169,7 @@ export class AccessService {
   
     async hasProjectMainAccess(projectId: string, userId: string, wholeProject = true, throwable = true) {
   
-      return this.hasProjectAccess(projectId, userId, [CollaboratorRole.ADMIN, CollaboratorRole.MANAGER], wholeProject, throwable);
+      return this.hasProjectAccess(projectId, userId, AccessRoles.main, wholeProject, throwable);
   
     }
   
@@ -187,7 +187,7 @@ export class AccessService {
   
     async hasProjectLiteAccess(projectId: string, userId: string, wholeProject = true, throwable = true) {
   
-      return this.hasProjectAccess(projectId, userId, [CollaboratorRole.ADMIN, CollaboratorRole.MANAGER, CollaboratorRole.EMPLOYEE], wholeProject, throwable);
+      return this.hasProjectAccess(projectId, userId, AccessRoles.lite, wholeProject, throwable);
   
     }
   
@@ -210,7 +210,7 @@ export class AccessService {
   
     async hasNodeAdminAccess(nodeId: string, userId: string, throwable = true) {
   
-      return this.hasNodeAccess(nodeId, userId, [CollaboratorRole.ADMIN], throwable);
+      return this.hasNodeAccess(nodeId, userId, AccessRoles.admin, throwable);
   
     }
   
@@ -226,7 +226,7 @@ export class AccessService {
   
     async hasNodeMainAccess(nodeId: string, userId: string, throwable = true) {
   
-      return this.hasNodeAccess(nodeId, userId, [CollaboratorRole.ADMIN, CollaboratorRole.MANAGER], throwable);
+      return this.hasNodeAccess(nodeId, userId, AccessRoles.main, throwable);
   
     }
   
@@ -242,7 +242,7 @@ export class AccessService {
   
     async hasNodeLiteAccess(nodeId: string, userId: string, throwable = true) {
   
-      return this.hasNodeAccess(nodeId, userId, [CollaboratorRole.ADMIN, CollaboratorRole.MANAGER, CollaboratorRole.EMPLOYEE], throwable);
+      return this.hasNodeAccess(nodeId, userId, AccessRoles.lite, throwable);
   
     }
 

@@ -1,24 +1,41 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Project } from './entities/project.entity';
-import { Brackets, DataSource, In, IsNull, Repository } from 'typeorm';
+import { Brackets, FindOptionsWhere, In, IsNull, Repository } from 'typeorm';
 import { Node } from './entities/node.entity';
-import { CreateNodesDto } from './dto/create-nodes.dto';
 import { CashboxService } from '@/cashbox/cashbox.service';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { UpdateNodeDto } from './dto/update-node.dto';
 import { GetProjectQueryDto } from './dto/get-project-query.dto';
 import GetProjectsQueryDto from './dto/get-projects-query.dt';
 import GetNodeQueryDto from './dto/get-node-query.dto';
-import CreateCollaboratorDto from './dto/create-collaborator.dto';
 import { Collaborator, CollaboratorRole } from './entities/collaborator.entity';
 import UpdateCollaboratorDto from './dto/update-collaborator.dto';
-import GetCollaboratorsQueryDto from './dto/get-collaborators-query.dto';
 import { AuthService } from '@/auth/auth.service';
 import { ParticipationFilter, ProjectServiceQuery } from './query/project.service.query';
-import DeleteCollaboratorDto from './dto/delete-collaborator.dto';
-import { AccessService } from '@/access/access.service';
+
+type NodeParams = {
+  name ?: string
+}
+
+type CreateNodesParams = {
+  projectId : string;
+  nodes : NodeParams[]
+}
+
+type CreateCollaboratorParams = {
+  projectId : string,
+  nodeId ?: string,
+  clientId : string,
+  userId : string,
+  role : CollaboratorRole
+}
+
+type GetCollaboratorsParams = {
+  nodeId ?: string,
+  projectId : string
+}
 
 /**
  * ============================================================
@@ -60,9 +77,8 @@ export class ProjectService {
 
     private readonly cashboxService: CashboxService,
 
+    @Inject(forwardRef(() => AuthService))
     private readonly authService: AuthService,
-
-    private readonly accessService: AccessService,
 
     private readonly projectServiceQuery: ProjectServiceQuery,
 
@@ -76,6 +92,34 @@ export class ProjectService {
     private readonly collaboratorRepo: Repository<Collaborator>,
 
   ) { }
+
+  /**
+   * 
+   * QUERY
+   * 
+   */
+
+  async isCollaborator(
+    userId : string,
+    projectId : string,
+    nodeId ?: string
+  ){
+    
+    return this.collaboratorRepo.exists({
+      where : {
+        user : {
+          id : userId
+        },
+        project : {
+          id : projectId
+        },
+        node : {
+          id : nodeId ? nodeId : IsNull()
+        }
+      }
+    })
+
+  }
 
   /**
    * 
@@ -96,7 +140,7 @@ export class ProjectService {
     return this.projectRepo
       .createQueryBuilder("project")
       .where("project.id = :projectId", { projectId })
-      .andWhere("project.owner.id = :userId", { userId })
+      .andWhere("project.ownerId = :userId", { userId })
       .getExists();
   }
 
@@ -111,8 +155,6 @@ export class ProjectService {
    */
 
   async collaboratorRelatedToUser(collaboratorId: string, userId: string, throwable: boolean = true) {
-
-    console.log(collaboratorId, userId);
 
     const qb = this.collaboratorRepo.createQueryBuilder("collaborator");
     qb.innerJoin(
@@ -166,8 +208,8 @@ export class ProjectService {
   ) {
     // VALIDACION BASICA
     const himselfRelates = await this.collaboratorLinkedToUser(
-      clientId,
       collaboratorId,
+      clientId,
       false
     )
 
@@ -317,7 +359,7 @@ export class ProjectService {
    * @returns 
    */
 
-  async collaboratorLinkedToUser(userId: string, collaboratorId: string, throwable: boolean = true) {
+  async collaboratorLinkedToUser(collaboratorId : string, userId : string, throwable: boolean = true) {
 
     const isExists = await this.collaboratorRepo.exists({
       where: {
@@ -328,10 +370,27 @@ export class ProjectService {
       }
     })
 
-    if (isExists && throwable) throw new BadRequestException("Collaborator does not correspond toward user");
+    if (!isExists && throwable) throw new BadRequestException("Collaborator does not correspond toward user");
 
     return isExists;
 
+  }
+
+  async collaboratorNotLinkedToUser(
+    id : string,
+    userId : string
+  ){
+    const exists = await this.collaboratorLinkedToUser(
+      id,
+      userId,
+      false
+    )
+
+    if(exists){
+      throw new BadRequestException("Collaborator is linked with user");
+    }
+
+    return exists;
   }
 
   /**
@@ -383,7 +442,7 @@ export class ProjectService {
    */
 
   async createNodes(
-    createNodesDto: CreateNodesDto
+    createNodesDto: CreateNodesParams
   ): Promise<{
     ids: string[]
   }> {
@@ -419,16 +478,16 @@ export class ProjectService {
    */
 
   async createCollaborator(
-    clientId: string,
-    createCollaboratorDto: CreateCollaboratorDto
+    params : CreateCollaboratorParams
   ): Promise<{ id: string }> {
 
     const {
       projectId,
       nodeId,
       userId,
+      clientId,
       ...payload
-    } = createCollaboratorDto;
+    } = params;
 
     /* ================= VALIDACIONES BÁSICAS ================= */
 
@@ -559,23 +618,15 @@ export class ProjectService {
    */
 
   async updateCollaborator(
-    clientId: string,
-    collaboratorId: string,
-    updateCollaboratorDto: UpdateCollaboratorDto,
+    id : string,
+    dto : UpdateCollaboratorDto
   ) {
 
-    const { projectId, nodeId, role } = updateCollaboratorDto;
-
-    this.collaboratorCheckAccess(
-      clientId,
-      collaboratorId,
-      projectId,
-      nodeId
-    )
+    const { role } = dto;
 
     // RETURN
 
-    return this.collaboratorRepo.update(collaboratorId, {
+    return this.collaboratorRepo.update(id, {
       role
     })
 
@@ -613,22 +664,11 @@ export class ProjectService {
   }
 
   async deleteCollaborator(
-    clientId: string,
-    collaboratorId: string,
-    deleteCollaborotaroDto: DeleteCollaboratorDto,
+    id : string
   ) {
 
-    const { projectId, nodeId } = deleteCollaborotaroDto;
-
-    await this.collaboratorCheckAccess(
-      clientId,
-      collaboratorId,
-      projectId,
-      nodeId,
-    )
-
     return this.collaboratorRepo.delete({
-      id: collaboratorId
+      id
     })
 
   }
@@ -731,13 +771,12 @@ export class ProjectService {
    * devuelve solo el nodo relacionado con el colaborador, no todos los nodos del proyecto.
    * En el resto de caso, devueve todos.
    * 
-   * 
+   * @param clientId 
    * @param projectId 
-   * @param user 
    * @param query 
    * @returns 
    */
-
+  
   async getProject(
     clientId: string,
     projectId: string,
@@ -745,8 +784,6 @@ export class ProjectService {
   ) {
 
     const { selectNodes, selectCollaborators } = query;
-
-    if (selectCollaborators) await this.accessService.hasProjectLiteAccess(projectId, clientId, false);
 
     const initialQb = this.projectRepo.createQueryBuilder("project")
       .where("project.id = :projectId", { projectId });
@@ -777,14 +814,11 @@ export class ProjectService {
    */
 
   async getNode(
-    clientId: string,
     nodeId: string,
     query: GetNodeQueryDto
   ) {
 
     const { selectProject, selectCollaborators } = query;
-
-    if (selectCollaborators) await this.accessService.hasNodeLiteAccess(nodeId, clientId);
 
     const relations = {
       ...(selectProject && { project: true }),
@@ -802,6 +836,31 @@ export class ProjectService {
 
   }
 
+  async getNodes(
+    projectId : string,
+    dto : GetNodeQueryDto,
+    nodeId ?: string,
+  ){
+    const { selectProject, selectCollaborators } = dto;
+
+    const relations = {
+      ...(selectProject && { project: true }),
+      ...(selectCollaborators && { collaborators: true })
+    }
+
+    const nodes = await this.nodeRepo.find({
+      where: {
+        ...(nodeId && ({id : nodeId})),
+        project : {
+          id : projectId
+        }
+      },
+      relations
+    })
+
+    return nodes;
+  }
+
   /**
    * 
    * Obtiene los colaboradores de un proyecto o nodo específico.
@@ -814,23 +873,23 @@ export class ProjectService {
    */
 
   async getCollaborators(
-    query: GetCollaboratorsQueryDto
+    params: GetCollaboratorsParams
   ) {
 
-    const { nodeId, projectId } = query;
+    const {
+      nodeId,
+      projectId
+    } = params;
 
-    if (!projectId && !nodeId) throw new BadRequestException("ProjectId or NodeId is required");
-
-    const where : any = {}
-
-    if(nodeId){
-      where.node = {
-        id : nodeId
-      }
-    }else{
-      where.project = {
+    const where : FindOptionsWhere<Collaborator> = {
+      project : {
         id : projectId
-      }
+      },
+      ...(nodeId && {
+        node : {
+          id : nodeId
+        }
+      })
     }
 
     return this.collaboratorRepo.find({
@@ -854,11 +913,8 @@ export class ProjectService {
    */
 
   async getCollaborator(
-    clientId: string,
     collaboratorId: string
   ) {
-
-    await this.collaboratorRelatedToUser(collaboratorId, clientId);
 
     return this.collaboratorRepo.findOne({
       where: {

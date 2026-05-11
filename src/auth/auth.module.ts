@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -13,7 +13,9 @@ import { JwtAccessGuard, JwtAuthEmailGuard, JwtAuthGuard, JwtRefreshGuard } from
 import JwtAuthStrategy from './strategies/jwt-auth.strategy';
 import JwtAuthEmailStrategy from './strategies/jwt-auth-email.strategy';
 import Session from './entities/session.entity';
-import { VerifyEmailGuard } from './guards/auth.guard';
+import { AuthManagerGuard, VerifyEmailGuard } from './guards/auth.guard';
+import { ProjectModule } from '@/projects/project.module';
+import JwtRefreshStrategy from './strategies/jwt-refresh.strategy';
 import { APP_GUARD } from '@nestjs/core';
 
 @Module({
@@ -25,7 +27,8 @@ import { APP_GUARD } from '@nestjs/core';
       useFactory: (config: ConfigService) => ({
         secret: config.get<Configuration["auth"]>("auth")?.jwtSecret,
       })
-    })
+    }),
+    forwardRef(() => ProjectModule)
   ],
   controllers: [AuthController],
   providers: [
@@ -34,17 +37,21 @@ import { APP_GUARD } from '@nestjs/core';
 
     JwtAuthEmailStrategy,
     JwtAuthEmailGuard,
+
     JwtAccessStrategy,
     JwtAccessGuard,
+
     JwtAuthStrategy,
     JwtAuthGuard,
 
-    {
-      provide: APP_GUARD,
-      useClass: JwtRefreshGuard,
-    },
+    JwtRefreshStrategy,
+    JwtRefreshGuard,
 
+    {
+      provide : APP_GUARD,
+      useClass : AuthManagerGuard
+    }
   ],
-  exports: [TypeOrmModule, JwtModule, AuthService]
+  exports: [TypeOrmModule, JwtModule, AuthService, JwtRefreshGuard]
 })
 export class AuthModule {}

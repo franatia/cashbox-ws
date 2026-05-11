@@ -1,7 +1,7 @@
 import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
-import { FeatureSchemaItem } from "@/product/entities/feature-schema-item.entity";
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { InsertProductSchema } from "./insert-product-schema.entity";
+import { FeatureSchemaItem } from "@/feature-schema/entities/feature-schema-item.entity";
 
 @Entity({
     schema : DatabaseSchemas.main,

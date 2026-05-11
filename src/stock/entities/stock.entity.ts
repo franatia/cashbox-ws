@@ -1,5 +1,5 @@
 import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
-import { ProductItem } from "@/product/entities/product-item.entity";
+import { Item } from "@/product/entities/item.entity";
 import { Node } from "@/projects/entities/node.entity";
 import { Column, Entity, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { StockMovement } from "./stock-movement.entity";
@@ -37,14 +37,14 @@ export class Stock {
     node!: Node;
 
     @OneToOne(
-        () => ProductItem,
+        () => Item,
         productItem => productItem.stock,
         {
             eager: false,
             onDelete: "CASCADE"
         }
     )
-    productItem!: ProductItem;
+    productItem!: Item;
 
     @Column({
         type : "int",

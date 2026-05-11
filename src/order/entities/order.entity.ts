@@ -6,9 +6,10 @@ import { Payment } from "@/payment/entities/payment.entity";
 import { PaymentListStatus } from "@/payment/entities/payment.enum";
 import { Project } from "@/projects/entities/project.entity";
 import { Tax } from "@/tax/entities/tax.entity";
-import { Column, CreateDateColumn, Entity, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { OrderDetail } from "./order-detail.entity";
+import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { OrderItem } from "./order-item.entity";
 import { Node } from "@/projects/entities/node.entity";
+import { Lot } from "@/stock/entities/lot.entity";
 
 export enum OrderStatus {
     CART = "CART",
@@ -84,31 +85,31 @@ export class Order {
     customer!: Customer;
 
     @Column({
-        type: "int",
+        type: "bigint",
         default: 0
     })
     subtotal!: number;
 
     @Column({
-        type: "int",
+        type: "bigint",
         default: 0
     })
     discount!: number;
 
     @Column({
-        type: "int",
+        type: "bigint",
         default: 0
     })
     total!: number;
 
     @Column({
-        type: "int",
+        type: "bigint",
         default: 0
     })
     profit!: number;
 
     @Column({
-        type: "int",
+        type: "bigint",
         default: 0
     })
     totalTaxes!: number;
@@ -150,12 +151,12 @@ export class Order {
     payments!: Payment[];
 
     @OneToMany(
-        () => OrderDetail,
-        orderDetail => orderDetail.order,
+        () => OrderItem,
+        orderItem => orderItem.order,
         {
             eager: false
         }
     )
-    details!: OrderDetail[]
+    details!: OrderItem[];
 
 }

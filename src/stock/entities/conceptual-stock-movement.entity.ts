@@ -31,7 +31,7 @@ export class ConceptualStockMovement {
             nullable: true
         }
     )
-    lot !: Lot | null;
+    lot ?: Lot;
 
     @Column({
         type: "int"

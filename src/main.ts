@@ -11,9 +11,6 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
       disableErrorMessages: process.env.APP_ENV === 'production',
     })
   )

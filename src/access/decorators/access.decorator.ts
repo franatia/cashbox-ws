@@ -1,5 +1,7 @@
+import { Class } from "@/common/types/class.type";
 import { CollaboratorRole } from "@/projects/entities/collaborator.entity";
 import { SetMetadata } from "@nestjs/common";
+import { Policie } from "../policies/policie";
 
 export interface AccessConfigMetadata {
 
@@ -15,8 +17,8 @@ export interface AccessConfigMetadata {
  * 
  */
 
-export const ACCESS_CONFIG = "access-config";
-export const ACCESS_POLICIES = "access-policies";
+export const ACCESS_CONFIG_KEY = "access-config";
+export const ACCESS_POLICIES_KEY = "access-policies";
 
 /**
  * 
@@ -73,7 +75,7 @@ export const FirstMatchAccess : AccessConfigMetadata = {
  * @returns 
  */
 
-export const AccessPolicies = (...policies: Function[]) => SetMetadata(ACCESS_POLICIES, policies);
+export const AccessPolicies = (...policies: Class<Policie>[]) => SetMetadata(ACCESS_POLICIES_KEY, policies);
 
 /**
  * 
@@ -84,4 +86,4 @@ export const AccessPolicies = (...policies: Function[]) => SetMetadata(ACCESS_PO
  * @returns 
  */
 
-export const AccessConfig = (...config : AccessConfigMetadata[]) => SetMetadata(ACCESS_POLICIES, Object.assign({}, ...config));
+export const AccessConfig = (...config : AccessConfigMetadata[]) => SetMetadata(ACCESS_CONFIG_KEY, Object.assign({}, ...config));

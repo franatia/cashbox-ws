@@ -1,17 +1,22 @@
 import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
-import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
-import { ProductItem } from "./product-item.entity";
-import { ProductItemGroup } from "./product-item-group.entity";
-import { ProductFeature } from "./product-feature.entity";
-import { FeatureSchemaItem } from "./feature-schema-item.entity";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Item } from "./item.entity";
+import { ItemGroup } from "./item-group.entity";
+import { Feature } from "./feature.entity";
 
 @Entity({
-    schema: DatabaseSchemas.main,
-    name: "feature-values"
+    schema: DatabaseSchemas.product,
+    name: "feature_values"
 })
 export class FeatureValue{
+
     @PrimaryGeneratedColumn("uuid")
     id!: string;
+
+    @CreateDateColumn({
+        type : "timestamptz"
+    })
+    createdAt !: Date;
 
     @Column({
         type: "text"
@@ -19,41 +24,32 @@ export class FeatureValue{
     value!: string;
 
     @ManyToOne(
-        () => ProductFeature,
-        productFeature => productFeature.values,
+        () => Feature,
+        feature => feature.values,
         {
             eager: false,
             onDelete: "CASCADE"
         }
     )
-    productFeature!: ProductFeature;
-
-    @ManyToOne(
-        () => FeatureSchemaItem,
-        {
-            eager: false,
-            nullable: true
-        }
-    )
-    featureSchemaItem!: FeatureSchemaItem | null;
+    feature!: Feature;
 
     @ManyToMany(
-        () => ProductItem,
-        productItem => productItem.featureValues,
+        () => Item,
+        item => item.featureValues,
         {
             eager: false
         }
     )
-    productItems!: ProductItem[];
+    items!: Item[];
 
     @ManyToMany(
-        () => ProductItemGroup,
-        productItemGroup => productItemGroup.featureValues,
+        () => ItemGroup,
+        itemGroup => itemGroup.featureValues,
         {
             eager: false,
             onDelete: "CASCADE"
         }
     )
-    productItemGroups!: ProductItemGroup[]
+    productItemGroups!: ItemGroup[]
 
 }

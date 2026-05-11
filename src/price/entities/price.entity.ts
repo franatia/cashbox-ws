@@ -2,7 +2,7 @@ import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
 import { Product } from "@/product/entities/product.entity";
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { PriceList } from "./price-list.entity";
-import { ProductItem } from "@/product/entities/product-item.entity";
+import { Item } from "@/product/entities/item.entity";
 
 export enum PriceDiscountType {
     PERCENT = "PERCENT",
@@ -66,7 +66,7 @@ export class Price {
     product!: Product;
 
     @ManyToOne(
-        () => ProductItem,
+        () => Item,
         productItem => productItem.prices,
         {
             eager: false,
@@ -74,7 +74,7 @@ export class Price {
             onDelete: "CASCADE"
         }
     )
-    productItem!: ProductItem
+    productItem!: Item
 
     @ManyToOne(
         () => PriceList,

@@ -1,13 +1,19 @@
 import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({
-    schema: DatabaseSchemas.main,
+    schema: DatabaseSchemas.product,
     name: "brands"
 })
 export class Brand {
+
     @PrimaryGeneratedColumn("uuid")
     id!: string;
+
+    @CreateDateColumn({
+        type : "timestamptz"
+    })
+    createdAt !: Date;
 
     @Column({
         type: "text"
@@ -15,14 +21,16 @@ export class Brand {
     name!: string;
 
     @Column({
-        type: "text"
+        type: "text",
+        nullable : true
     })
-    description!: string;
+    description ?: string;
 
     @Column({
-        type: "text"
+        type: "text",
+        nullable : true
     })
-    logoUrl!: string
+    logoUrl ?: string;
 
     @Column({
         type: "text"

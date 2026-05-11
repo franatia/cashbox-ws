@@ -8,16 +8,16 @@ import { Order } from "@/order/entities/order.entity";
 import { Cashbox } from "@/cashbox/entities/cashbox.entity";
 import { Stock } from "@/stock/entities/stock.entity";
 import { Customer } from "@/customer/entities/customer.entity";
-import { custom } from "joi";
-import { Tax } from "@/tax/entities/tax.entity";
 import { PriceList } from "@/price/entities/price-list.entity";
-import { ProductGroup } from "@/product/entities/product-group.entity";
+import { Group } from "@/product/entities/group.entity";
 import { Rule } from "@/rule/entities/rule.entity";
 import { Debt } from "@/debt/entities/debt.entity";
 import { StockTransfer } from "@/stock/entities/stock-transfer.entity";
 import { CustomerSegment } from "@/customer/entities/customer-segment.entity";
 import { TaxSchema } from "@/tax/entities/tax-schema.entity";
-import { FeatureSchema } from "@/product/entities/feature-schema.entity";
+import { FeatureSchema } from "@/feature-schema/entities/feature-schema.entity";
+import { Catalog } from "@/catalog/entities/catalog.entity";
+import { LinkingCatalog } from "@/catalog/entities/linking-catalog.entity";
 
 @Entity({
     schema: DatabaseSchemas.main,
@@ -80,14 +80,26 @@ export class Project {
     products !: Product[]
 
     @OneToMany(
-        () => ProductGroup,
-        productGroup => productGroup.project,
+        () => Catalog,
+        catalog => catalog.project
+    )
+    catalogs !: Catalog[]
+
+    @OneToMany(
+        () => LinkingCatalog,
+        linkingCatalog => linkingCatalog.project
+    )
+    linkingCatalogs !: LinkingCatalog[]
+
+    @OneToMany(
+        () => Group,
+        group => group.project,
         {
             eager: false,
             nullable: false
         }
     )
-    productGroups!: ProductGroup[];
+    groups!: Group[];
 
     @OneToMany(
         () => Order,

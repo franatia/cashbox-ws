@@ -4,10 +4,21 @@ import { AccessController } from './access.controller';
 import { ProjectModule } from '@/projects/project.module';
 import { AccessGuard } from './guards/access.guard';
 import { APP_GUARD } from '@nestjs/core';
+import { AuthModule } from '@/auth/auth.module';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import Configuration from '@/config/interfaces/configuration.interface';
 
 @Module({
   imports: [
-    forwardRef(() => ProjectModule)
+    ProjectModule,
+    AuthModule,
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.get<Configuration["auth"]>("auth")?.jwtSecret,
+      })
+    }),
   ],
   controllers: [AccessController],
   providers: [
