@@ -760,7 +760,7 @@ export class ProjectService {
       initialQb
     );
 
-    return qb.getMany();
+    return qb.getOneOrFail();
 
   }
 
@@ -821,15 +821,15 @@ export class ProjectService {
 
     if (!projectId && !nodeId) throw new BadRequestException("ProjectId or NodeId is required");
 
-    const where : any = {}
+    const where: any = {}
 
-    if(nodeId){
+    if (nodeId) {
       where.node = {
-        id : nodeId
+        id: nodeId
       }
-    }else{
+    } else {
       where.project = {
-        id : projectId
+        id: projectId
       }
     }
 

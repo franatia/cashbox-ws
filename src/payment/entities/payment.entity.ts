@@ -22,6 +22,7 @@ export class Payment {
             onDelete: "CASCADE"
         }
     )
+    project!: Project;
 
     @ManyToOne(
         () => Customer,

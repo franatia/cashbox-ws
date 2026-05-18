@@ -1,5 +1,5 @@
 import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
-import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { ProductGroup } from "./product-group.entity";
 import { Project } from "@/projects/entities/project.entity";
 import { ProductItem } from "./product-item.entity";
@@ -67,7 +67,7 @@ export class Product {
             nullable: false
         }
     )
-    @JoinColumn()
+    @JoinTable()
     groups!: ProductGroup[]
 
     @OneToMany(

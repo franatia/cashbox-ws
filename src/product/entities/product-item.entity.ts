@@ -59,14 +59,14 @@ export class ProductItem{
     )
     prices!: Price[];
 
-    @OneToOne(
+    @OneToMany(
         () => Stock,
         stock => stock.productItem,
         {
             eager: false
         }
     )
-    stock !: Stock;
+    stocks!: Stock[];
 
     @Column({
         type: "boolean",

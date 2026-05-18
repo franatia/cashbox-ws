@@ -1,7 +1,7 @@
-import { CanActivate, ExecutionContext, Inject, Injectable, InternalServerErrorException } from "@nestjs/common";
+import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { AccessService } from "../access.service";
-import { ACCESS_CONFIG, AccessConfigMetadata } from "@/access/decorators/access.decorator";
+import { ACCESS_CONFIG, ACCESS_POLICIES, AccessConfigMetadata } from "@/access/decorators/access.decorator";
 import { IS_PUBLIC_KEY } from "@/common/decorators/public.decorator";
 
 /**
@@ -20,32 +20,42 @@ export class AccessGuard implements CanActivate {
     ) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
-        
+
         const isPublic = this.reflector.getAllAndOverride<boolean>(
             IS_PUBLIC_KEY,
             [context.getHandler(), context.getClass()],
         );
 
-        if(isPublic) return true;
-        
+        if (isPublic) return true;
+
         const config = this.reflector.getAllAndOverride<AccessConfigMetadata>(
             ACCESS_CONFIG,
             [context.getHandler(), context.getClass()],
         ) ?? {};
 
-        const policies = this.reflector.getAllAndOverride<Function[]>(
-            "access-policies",
+        const policiesMetadata = this.reflector.getAllAndOverride<Function | Function[]>(
+            ACCESS_POLICIES,
             [context.getHandler(), context.getClass()],
-        ) ?? [];
+        );
 
-        const {firstMatch = false} = config;
+        const policies = Array.isArray(policiesMetadata)
+            ? policiesMetadata
+            : policiesMetadata
+                ? [policiesMetadata]
+                : [];
 
-        for(const policy of policies){
+        const { firstMatch = false } = config;
+
+        if (!policies.length) {
+            return true;
+        }
+
+        for (const policy of policies) {
             try {
                 await policy(context, this.accessService, config);
-                if(firstMatch) return true;
+                if (firstMatch) return true;
             } catch (error) {
-                if(firstMatch) continue;
+                if (firstMatch) continue;
                 throw error;
             }
         }

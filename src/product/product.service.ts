@@ -1,8 +1,8 @@
-import { BadRequestException, ConsoleLogger, GoneException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, ConsoleLogger, GoneException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProjectService } from '@/projects/project.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Product } from './entities/product.entity';
+import { Product, ProductUnitType } from './entities/product.entity';
 import { DataSource, In, Repository } from 'typeorm';
 import CreateProductItemsDto from './dto/create-product-items.dto';
 import CreateFeatureDto from './dto/create-feature.dto';
@@ -13,6 +13,8 @@ import { FeatureDto } from './dto/feature.dto';
 import { CreateFeaturesDto } from './dto/create-features.dto';
 import CreateProductItemGroupDto from './dto/create-product-item-group.dto';
 import { ProductItemGroup } from './entities/product-item-group.entity';
+import { Stock } from '@/stock/entities/stock.entity';
+import { Node } from '@/projects/entities/node.entity';
 
 interface FeatureValueMetadata {
   id: string,
@@ -237,23 +239,54 @@ export class ProductService {
 
     //await this.projectService.hasProjectAdminAccess(projectId, user);
 
-    const slug = createProductDto.name.toLowerCase().replace(" ", "-");
+    const slug = createProductDto.name.toLowerCase().replace(/\s+/g, "-");
 
-    const productDraft = this.productRepo.create(
-      {
+    return await this.dataSource.transaction(async (manager) => {
+      const productDraft = manager.create(Product, {
         ...payload,
         project: {
           id: projectId
         },
+        unit: ProductUnitType.UNIT,
         slug
+      });
+
+      const savedProduct = await manager.save(Product, productDraft);
+
+      // Check if SKU already exists in database to prevent unique constraint failures
+      let sku = `${slug.toUpperCase()}-STANDARD`;
+      const skuExists = await manager.findOne(ProductItem, { where: { sku } });
+      if (skuExists) {
+        sku = `${slug.toUpperCase()}-${Date.now().toString().slice(-4)}`;
       }
-    )
 
-    const { id } = await this.productRepo.save(productDraft);
+      const defaultItem = manager.create(ProductItem, {
+        product: { id: savedProduct.id },
+        sku,
+        featureValues: []
+      });
+      const savedItem = await manager.save(ProductItem, defaultItem);
 
-    return {
-      id
-    }
+      // Fetch the default branch warehouse node for this project
+      const defaultNode = await manager.findOne(Node, {
+        where: { project: { id: projectId } }
+      });
+
+      if (defaultNode) {
+        const stock = manager.create(Stock, {
+          productItem: { id: savedItem.id },
+          node: { id: defaultNode.id },
+          project: { id: projectId },
+          quantity: 0,
+          totalAmount: 0
+        });
+        await manager.save(Stock, stock);
+      }
+
+      return {
+        id: savedProduct.id
+      };
+    });
 
   }
 
@@ -470,4 +503,135 @@ export class ProductService {
     )
   }
 
+  async findAllByProject(projectId: string) {
+    // 1. Fetch products without items.stock relation to bypass TypeORM JoinColumn bug
+    const products = await this.productRepo.find({
+      where: { project: { id: projectId } },
+      relations: ['brand', 'groups', 'items', 'items.featureValues'],
+    });
+
+    // 2. Fetch all stocks for this project
+    const stocks = await this.dataSource.getRepository(Stock).find({
+      where: { project: { id: projectId } },
+      relations: ['productItem'],
+    });
+
+    // 3. Map stock quantities by productItem.id
+    const stockMap = new Map<string, number>();
+    stocks.forEach(s => {
+      if (s.productItem) {
+        stockMap.set(s.productItem.id, s.quantity);
+      }
+    });
+
+    return products.map(product => {
+      let totalStock = 0;
+      let variantCount = product.items?.length || 0;
+      
+      product.items?.forEach(item => {
+        const qty = stockMap.get(item.id) || 0;
+        totalStock += qty;
+      });
+
+      return {
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        basePrice: product.basePrice,
+        subtractType: product.subtractType,
+        totalStock,
+        variantCount,
+        groupNames: product.groups?.map(g => g.slug) || [],
+        brandName: product.brand ? product.brand.name : null,
+        defaultItemId: product.items?.[0]?.id || null,
+      };
+    });
+  }
+
+  async findOneDetail(id: string, nodeId?: string) {
+    // 1. Fetch product details
+    const product = await this.productRepo.findOne({
+      where: { id },
+      relations: [
+        'project',
+        'brand',
+        'groups',
+        'features',
+        'features.values',
+        'items',
+        'items.featureValues',
+      ],
+    });
+
+    if (!product) throw new NotFoundException(`Product with ID ${id} not found`);
+
+    // 2. Fetch stocks for the product items (with lazy initialization if nodeId is specified)
+    const itemIds = product.items?.map(item => item.id) || [];
+    let stocks: Stock[] = [];
+    if (itemIds.length > 0) {
+      const stockRepo = this.dataSource.getRepository(Stock);
+      if (nodeId) {
+        for (const itemId of itemIds) {
+          let stock = await stockRepo.findOne({
+            where: { node: { id: nodeId }, productItem: { id: itemId } },
+            relations: ['productItem', 'node']
+          });
+          if (!stock) {
+            stock = stockRepo.create({
+              productItem: { id: itemId },
+              node: { id: nodeId },
+              project: { id: product.project.id },
+              quantity: 0,
+              totalAmount: 0
+            });
+            stock = await stockRepo.save(stock);
+          }
+          stocks.push(stock);
+        }
+      } else {
+        stocks = await stockRepo.find({
+          where: { productItem: { id: In(itemIds) } },
+          relations: ['productItem', 'node'],
+        });
+      }
+    }
+
+    // 3. Map stocks by productItem.id
+    const stockMap = new Map<string, Stock>();
+    stocks.forEach(s => {
+      if (s.productItem) {
+        stockMap.set(s.productItem.id, s);
+      }
+    });
+
+    return {
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      slug: product.slug,
+      subtractType: product.subtractType,
+      webVisibility: product.webVisibility,
+      basePrice: product.basePrice,
+      brand: product.brand ? { id: product.brand.id, name: product.brand.name } : undefined,
+      groups: product.groups || [],
+      features: product.features || [],
+      items: product.items?.map(item => {
+        const itemStock = stockMap.get(item.id);
+        return {
+          id: item.id,
+          sku: item.sku,
+          webVisibility: item.webVisibility,
+          featureValues: item.featureValues || [],
+          stock: itemStock ? {
+            id: itemStock.id,
+            quantity: itemStock.quantity,
+            totalAmount: itemStock.totalAmount,
+            nodeId: itemStock.node?.id || '',
+          } : undefined,
+        };
+      }) || [],
+    };
+  }
+
 }
+

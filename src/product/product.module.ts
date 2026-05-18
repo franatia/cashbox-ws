@@ -12,6 +12,7 @@ import { FeatureSchema } from './entities/feature-schema.entity';
 import { FeatureSchemaItem } from './entities/feature-schema-item.entity';
 import { ComposityItem } from './entities/composity-item.entity';
 import { Brand } from './entities/brand.entity';
+import { Stock } from '@/stock/entities/stock.entity';
 import { ProjectModule } from '@/projects/project.module';
 
 @Module({
@@ -26,7 +27,8 @@ import { ProjectModule } from '@/projects/project.module';
       FeatureSchema,
       FeatureSchemaItem,
       ComposityItem,
-      Brand
+      Brand,
+      Stock
     ]),
     ProjectModule
   ],
@@ -34,3 +36,4 @@ import { ProjectModule } from '@/projects/project.module';
   providers: [ProductService],
 })
 export class ProductModule { }
+

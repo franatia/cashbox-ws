@@ -3,9 +3,9 @@ import { SetMetadata } from "@nestjs/common";
 
 export interface AccessConfigMetadata {
 
-    wholeProject ?: boolean, // Whole project sets if the client has to be a general collaborator of project
-    freeNull ?: boolean,  // Si no se encuentra el projectId o nodeId en la request, tira error
-    firstMatch ?: boolean // Si hay varias policies, con que una se cumpla alcanza
+    wholeProject?: boolean, // Whole project sets if the client has to be a general collaborator of project
+    freeNull?: boolean,  // Si no se encuentra el projectId o nodeId en la request, tira error
+    firstMatch?: boolean // Si hay varias policies, con que una se cumpla alcanza
 
 }
 
@@ -25,11 +25,11 @@ export const ACCESS_POLICIES = "access-policies";
  */
 
 export const AccessRoles = {
-    admin : [CollaboratorRole.ADMIN],
-    manager : [CollaboratorRole.MANAGER],
-    employee : [CollaboratorRole.EMPLOYEE],
-    main : [CollaboratorRole.ADMIN, CollaboratorRole.MANAGER],
-    lite : [CollaboratorRole.ADMIN, CollaboratorRole.MANAGER, CollaboratorRole.EMPLOYEE]
+    admin: [CollaboratorRole.ADMIN],
+    manager: [CollaboratorRole.MANAGER],
+    employee: [CollaboratorRole.EMPLOYEE],
+    main: [CollaboratorRole.ADMIN, CollaboratorRole.MANAGER],
+    lite: [CollaboratorRole.ADMIN, CollaboratorRole.MANAGER, CollaboratorRole.EMPLOYEE]
 }
 
 /**
@@ -38,8 +38,8 @@ export const AccessRoles = {
  * que pertenezca al proyecto, sin necesidad de ser colaborador global
  * 
  */
-export const AtLeastNodeAccess : AccessConfigMetadata = {
-    wholeProject : false
+export const AtLeastNodeAccess: AccessConfigMetadata = {
+    wholeProject: false
 };
 
 /**
@@ -50,8 +50,8 @@ export const AtLeastNodeAccess : AccessConfigMetadata = {
  * 
  */
 
-export const FreeNullAccess : AccessConfigMetadata = {
-    freeNull : true
+export const FreeNullAccess: AccessConfigMetadata = {
+    freeNull: true
 };
 
 /**
@@ -61,8 +61,8 @@ export const FreeNullAccess : AccessConfigMetadata = {
  * 
  */
 
-export const FirstMatchAccess : AccessConfigMetadata = {
-    firstMatch : true
+export const FirstMatchAccess: AccessConfigMetadata = {
+    firstMatch: true
 };
 
 /**
@@ -84,4 +84,4 @@ export const AccessPolicies = (...policies: Function[]) => SetMetadata(ACCESS_PO
  * @returns 
  */
 
-export const AccessConfig = (...config : AccessConfigMetadata[]) => SetMetadata(ACCESS_POLICIES, Object.assign({}, ...config));
+export const AccessConfig = (...config: AccessConfigMetadata[]) => SetMetadata(ACCESS_CONFIG, Object.assign({}, ...config));

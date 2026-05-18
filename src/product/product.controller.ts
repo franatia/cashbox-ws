@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Query } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
@@ -55,4 +55,15 @@ export class ProductController {
 
   }
 
+  @Get('project/:projectId')
+  findAllByProject(@Param('projectId') projectId: string) {
+    return this.productService.findAllByProject(projectId);
+  }
+
+  @Get(':id')
+  findOneDetail(@Param('id') id: string, @Query('nodeId') nodeId?: string) {
+    return this.productService.findOneDetail(id, nodeId);
+  }
+
 }
+

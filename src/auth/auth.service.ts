@@ -37,6 +37,10 @@ export class AuthService {
     })
   }
 
+  async existsUser(userId: string): Promise<boolean> {
+    return !!await this.findUser({ id: userId });
+  }
+
   private async generateJwt(payload: object, expiresIn: StringValue): Promise<string> {
     return await this.jwtService.signAsync(payload, {
       expiresIn

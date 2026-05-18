@@ -1,7 +1,7 @@
 import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
 import { ProductItem } from "@/product/entities/product-item.entity";
 import { Node } from "@/projects/entities/node.entity";
-import { Column, Entity, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, Unique } from "typeorm";
 import { StockMovement } from "./stock-movement.entity";
 import { ConceptualStockMovement } from "./conceptual-stock-movement.entity";
 import { Project } from "@/projects/entities/project.entity";
@@ -11,6 +11,7 @@ import { Lot } from "./lot.entity";
     schema: DatabaseSchemas.main,
     name: "stock"
 })
+@Unique(["node", "productItem"])
 export class Stock {
 
     @PrimaryGeneratedColumn("uuid")
@@ -36,9 +37,9 @@ export class Stock {
     )
     node!: Node;
 
-    @OneToOne(
+    @ManyToOne(
         () => ProductItem,
-        productItem => productItem.stock,
+        productItem => productItem.stocks,
         {
             eager: false,
             onDelete: "CASCADE"

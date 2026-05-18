@@ -1,29 +1,48 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthService } from '@/auth/auth.service';
-import { Repository } from 'typeorm';
+import { Repository, ILike, Not } from 'typeorm';
 import { User } from '@/auth/entities';
 
 @Injectable()
 export class UsersService {
 
-  private readonly userRepo : Repository<User>;
+  private readonly userRepo: Repository<User>;
 
   constructor(
-    authService : AuthService
-  ){
+    authService: AuthService
+  ) {
     this.userRepo = authService.userRepo;
   }
 
   getUser(
-    user : string
-  ){
+    user: string
+  ) {
     return this.userRepo.findOne({
-      where : {
+      where: {
         id: user
       }
     })
   }
 
+  async searchUsers(query: string, excludeUserId: string) {
+    if (!query || query.trim().length < 3) {
+      return [];
+    }
+    const searchPattern = `%${query.trim()}%`;
+    return this.userRepo.find({
+      where: [
+        { email: ILike(searchPattern), id: Not(excludeUserId) },
+        { username: ILike(searchPattern), id: Not(excludeUserId) },
+      ],
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        imageProfile: true,
+      },
+      take: 10,
+    });
+  }
+
 }
+

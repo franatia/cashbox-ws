@@ -1,6 +1,6 @@
 import { Payment } from "@/payment/entities/payment.entity";
 import { StockMovement } from "@/stock/entities/stock-movement.entity";
-import { Column, Entity, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { CashboxMovement } from "./cashbox-movement.entity";
 import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
 
@@ -26,6 +26,7 @@ export class CashboxMovementDetail {
             nullable: true
         }
     )
+    @JoinColumn()
     payment !: Payment;
 
     @OneToOne(
@@ -35,6 +36,7 @@ export class CashboxMovementDetail {
             nullable: true
         }
     )
+    @JoinColumn()
     stockMovement!: StockMovement;
 
     @ManyToOne(

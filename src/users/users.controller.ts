@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 
@@ -11,4 +11,10 @@ export class UsersController {
     return this.usersService.getUser(user);
   }
 
+  @Get('search')
+  search(@Query('q') query: string, @CurrentUser() user: string) {
+    return this.usersService.searchUsers(query, user);
+  }
+
 }
+
