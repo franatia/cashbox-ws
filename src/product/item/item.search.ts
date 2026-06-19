@@ -2,7 +2,10 @@ import { Injectable } from "@nestjs/common";
 import { Item } from "../entities/item.entity";
 import { Repository, SelectQueryBuilder } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
-import ItemQuery from "./item.query";
+import { ItemQuery } from "./item.query";
+import { makeSelectors } from "@/common/helpers/query/query.helper";
+import { AuthContext } from "@/auth/auth.context";
+import { Stock } from "@/stock/entities/stock.entity";
 
 export type GetParams = {
     query?: string,
@@ -25,13 +28,14 @@ type SearchParams = {
     id?: string,
     productId?: string,
     projectId?: string,
+    nodeId?: string,
     groupId?: string,
-    emptyGroup ?: boolean,
+    emptyGroup?: boolean,
     featureGroupId?: string,
     featureValuesId?: string[],
     selectFeatureValues?: boolean,
-    skip : number,
-    take : number
+    skip: number,
+    take: number
 }
 
 @Injectable()
@@ -41,8 +45,15 @@ export default class ItemSearch {
         @InjectRepository(Item)
         private readonly repo: Repository<Item>,
 
-        private readonly query : ItemQuery
+        private readonly query: ItemQuery,
+
+        private readonly authContext: AuthContext
     ) { }
+
+    get nodeId() {
+        const context = this.authContext.userContext;
+        return context.nodeId;
+    }
 
     /**
      * 
@@ -61,13 +72,26 @@ export default class ItemSearch {
             featureValuesId,
             projectId,
             emptyGroup,
-            selectFeatureValues
+            selectFeatureValues,
+            nodeId
         } = params;
 
         query.innerJoin(
             "item.product",
             "product",
-        );
+        ).innerJoin(
+            "item.stock",
+            "stock"
+        ).leftJoin(
+            "item.cost",
+            "cost"
+        ).leftJoin(
+            "stock.items",
+            "stockItem"
+        ).innerJoin(
+            "stockItem.node",
+            "stockItemNode"
+        )
 
         if (projectId) {
             query.innerJoin("product.project", "project")
@@ -78,7 +102,7 @@ export default class ItemSearch {
                 "item.groups",
                 "group"
             );
-        }else if(emptyGroup){
+        } else if (emptyGroup) {
             query.leftJoin(
                 "item.groups",
                 "groups"
@@ -91,9 +115,9 @@ export default class ItemSearch {
                     "item.featureGroup",
                     "featureGroup"
                 )
-        }else if(selectFeatureValues){
+        } else if (selectFeatureValues) {
             query
-            .leftJoin(
+                .leftJoin(
                     "item.featureGroup",
                     "featureGroup"
                 )
@@ -110,6 +134,14 @@ export default class ItemSearch {
                 "featureValue"
             )
         }
+
+        if (nodeId) {
+            query.innerJoin(
+                "stock.items",
+                "stockItem"
+            );
+        }
+
     }
 
     /**
@@ -134,13 +166,25 @@ export default class ItemSearch {
             emptyGroup,
             searchText,
             skip,
-            take
+            take,
+            nodeId = this.nodeId
         } = params;
 
         query.where("1=1");
 
         if (projectId) {
             query.andWhere("project.id = :projectId", { projectId })
+        }
+
+        if (nodeId) {
+
+            query.andWhere(
+                "stockItem.nodeId = :nodeId",
+                {
+                    nodeId
+                }
+            )
+
         }
 
         if (id) {
@@ -165,13 +209,13 @@ export default class ItemSearch {
             query.andWhere("group.id = :groupId", {
                 groupId
             });
-        }else if(emptyGroup){
+        } else if (emptyGroup) {
             query.andWhere("group.id IS NULL");
         }
 
         if (searchText) {
             this.applySearchTextFilter(query, searchText);
-        }else{
+        } else {
             query.orderBy(
                 "item.createdAt",
                 "DESC"
@@ -183,7 +227,6 @@ export default class ItemSearch {
         }
 
         query.distinct(true)
-            .orderBy("item.createdAt", "DESC")
             .skip(skip)
             .take(take);
 
@@ -199,7 +242,8 @@ export default class ItemSearch {
 
         query.andWhere(
             `(unaccent(item.name) ILIKE unaccent(:searchText)
-        OR unaccent(item.sku) ILIKE unaccent(:searchText))`,
+        OR unaccent(item.sku) ILIKE unaccent(:searchText)
+        OR unaccent(product.name) ILIKE unaccent(:searchText))`,
             {
                 searchText: `%${normalizedSearch}%`
             }
@@ -211,7 +255,10 @@ export default class ItemSearch {
             WHEN unaccent(item.name) ILIKE unaccent(:exactSearch) THEN 2
             WHEN unaccent(item.sku) ILIKE unaccent(:startsSearch) THEN 3
             WHEN unaccent(item.name) ILIKE unaccent(:startsSearch) THEN 4
-            ELSE 5
+            WHEN unaccent(product.name) ILIKE unaccent(:exactSearch) THEN 5
+            WHEN unaccent(product.name) ILIKE unaccent(:startsSearch) THEN 6
+
+            ELSE 7
         END
     `, "search_rank");
 
@@ -247,19 +294,65 @@ export default class ItemSearch {
                 "featureValues.feature"
             ]
         })
-            .addSelect([
-                "item.id",
-                "item.name",
-                "item.sku",
-                "item.webVisibility",
-                "product.id",
-                "product.name",
-                "product.subtractType",
-                "product.webVisibility",
-                "product.basePrice",
-                "product.unit",
-                "featureValue.id",
-                "featureValue.value"
+            .select([
+                ...makeSelectors(
+                    "item",
+                    [
+                        "id",
+                        "createdAt",
+                        "name",
+                        "sku",
+                        "webVisibility"
+                    ]
+                ),
+                ...makeSelectors(
+                    "product",
+                    [
+                        "id",
+                        "createdAt",
+                        "name",
+                        "subtractType",
+                        "visibility",
+                        "basePrice",
+                        "unit",
+                    ]
+                ),
+                ...makeSelectors(
+                    "featureValue",
+                    [
+                        "id",
+                        "value"
+                    ]
+                ),
+                ...makeSelectors(
+                    "cost",
+                    [
+                        "id"
+                    ]
+                ),
+                ...makeSelectors(
+                    "stock",
+                    [
+                        "id",
+                        "quantity",
+                        "remaining"
+                    ]
+                ),
+                ...makeSelectors(
+                    "stockItem",
+                    [
+                        "id",
+                        "quantity",
+                        "remaining"
+                    ]
+                ),
+                ...makeSelectors(
+                    "stockItemNode",
+                    [
+                        "id",
+                        "name"
+                    ]
+                )
             ]);
     }
 
@@ -281,9 +374,9 @@ export default class ItemSearch {
 
         const query = this.repo.createQueryBuilder("item");
 
+        this.applySelectors(query);
         this.applyJoins(query, params);
         this.applyFilters(query, params);
-        this.applySelectors(query);
 
         const items = await query
             .getMany();
@@ -307,10 +400,38 @@ export default class ItemSearch {
     async get(
         params: SearchParams
     ) {
-        return this.search(params);
+        const items = await this.search(params);
+
+        this.mapStockItems(items);
+
+        return items;
     }
 
-    
+    mapStockItems(
+        items: Item[]
+    ) {
+
+        for (const item of items) {
+
+            const {
+                stock
+            } = item;
+
+            if (!stock) continue;
+
+            const {
+                items
+            } = stock;
+
+            if (items.length === 1) {
+                item.stock = {
+                    ...(items[0] as object as Stock)
+                };
+            }
+
+        }
+
+    }
 
     /**
      * 
@@ -337,7 +458,7 @@ export default class ItemSearch {
                 prices: true,
             },
             loadRelationIds: {
-                relations : [
+                relations: [
                     "groups",
                     "featureGroup"
                 ]

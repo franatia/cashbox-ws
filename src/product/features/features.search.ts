@@ -2,8 +2,8 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Feature } from "../entities/feature.entity";
 import { Repository } from "typeorm";
 import { SelectQueryBuilder } from "typeorm/browser";
-import { BasicSearchParams } from "@/common/interfaces/search-params.interface";
-import { isEmptyAndThrow } from "@/common/helpers/search-params.helper";
+import { BasicSearchParams } from "@/common/types/params/search-params.type";
+import { notSearchParamsEmpty } from "@/common/helpers/params/search-params.helper";
 import { BadRequestException } from "@nestjs/common";
 import FeatureValuesSearch from "../feature-values/feature-values.search";
 
@@ -69,8 +69,8 @@ export default class FeatureSearch {
     ){
         const query = this.repo.createQueryBuilder("feature");
 
-        this.applyFilters(query, params);
         this.applySelectors(query);
+        this.applyFilters(query, params);
 
         return query.getMany();
     }
@@ -79,7 +79,7 @@ export default class FeatureSearch {
         params : SearchParams
     ){
 
-        isEmptyAndThrow(params);
+        notSearchParamsEmpty(params);
 
         return this.search(params);
 

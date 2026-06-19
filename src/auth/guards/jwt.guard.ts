@@ -1,4 +1,4 @@
-import { JwtTypes } from "@/common/constants/jwt-types.enum";
+import { JwtTypes } from "@/common/enum/token/jwt-types.enum";
 import { BadRequestException, CanActivate, ExecutionContext, GoneException, Injectable, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { InjectRepository } from "@nestjs/typeorm";

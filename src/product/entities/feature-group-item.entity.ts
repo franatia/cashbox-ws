@@ -1,7 +1,7 @@
 import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Feature } from "./feature.entity";
 import { FeatureGroup } from "./feature-group.entity";
-import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
+import { DatabaseSchemas } from "@/common/enum/db/database-schemas.enum";
 
 @Entity({
     name: "feature_group_items",

@@ -1,7 +1,7 @@
-import { Class } from "@/common/types/class.type";
-import { CollaboratorRole } from "@/projects/entities/collaborator.entity";
+import { Class } from "@/common/types/abstract/class.type";
 import { SetMetadata } from "@nestjs/common";
 import { Policie } from "../policies/policie";
+import { CollaboratorRole } from "@/project/enums/roles.enum";
 
 export interface AccessConfigMetadata {
 

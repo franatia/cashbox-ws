@@ -1,14 +1,16 @@
 import { InjectRepository } from "@nestjs/typeorm";
 import { Item } from "../entities/item.entity";
-import { DeepPartial, FindManyOptions, FindOneOptions, FindOptionsWhere, Repository } from "typeorm";
-import { DataSource } from "typeorm";
+import { DeepPartial, FindOptionsWhere, Repository } from "typeorm";
 import { BadRequestException, forwardRef, Inject, Injectable } from "@nestjs/common";
-import { buildSku, SkuPrefix } from "@/common/helpers/sku.helper";
+import { buildSku, SkuPrefix } from "@/common/helpers/entities/sku.helper";
 import { FeatureDto } from "../features/dto/feature.dto";
 import { SelectQueryBuilder } from "typeorm";
 import { FeaturesService } from "../features/features.service";
 import { CombinationSeed } from "../features/interfaces/combination-seed.interface";
 import { FeatureContext } from "./interfaces/feature-context";
+import {BaseQuery} from "@/common/models/crud/query/base-query.crud";
+import { OrmParams, UpdateParams, UpdateSameContentParams } from "./types/params/query.params";
+import { ItemEvent } from "./event-listener/item.event";
 
 
 /**
@@ -17,77 +19,26 @@ import { FeatureContext } from "./interfaces/feature-context";
  * 
  */
 
-type OrmParams = {
-    productId?: string,
-    featureGroupId?: string,
-    featureValuesId?: string[],
-    projectId?: string,
-    groupId?: string,
-    name?: string,
-    sku?: string,
-    webVisibility?: boolean;
-}
 
-/**
- * 
- * UPDATE PARAMS
- * 
- * 
- */
-
-type SafeUpdateOrm = {
-    name?: string,
-    sku?: string,
-    webVisibility?: boolean,
-}
 
 @Injectable()
-export default class ItemQuery {
+export class ItemQuery extends BaseQuery<Item> {
     constructor(
         @InjectRepository(Item)
-        private readonly repo: Repository<Item>,
-
-        private readonly dataSource: DataSource,
-
+        repo: Repository<Item>,
         @Inject(forwardRef(() => FeaturesService))
-        private readonly featuresService: FeaturesService
-    ) { }
-
-    /**
-     * 
-     * FIND
-     * 
-     */
-
-    /**
-     * 
-     * @param options 
-     * @returns 
-     */
-
-    async findOne(
-        options: FindOneOptions<Item>
+        private readonly featuresService: FeaturesService,
+    
+        private readonly event : ItemEvent
     ) {
-        return this.repo.findOne(options);
+        super(Item, repo);
     }
 
     /**
      * 
-     * Busca los productItems segun
-     * el options where dado
+     * FINDERS
      * 
-     * @param where 
-     * @param select 
-     * @returns 
      */
-
-    async findMany(
-        options: FindManyOptions<Item>
-    ): Promise<Item[]> {
-
-        return this.repo.find(options);
-
-    }
 
     /**
      * Busca los items del product
@@ -164,14 +115,6 @@ export default class ItemQuery {
      * 
      */
 
-    exists(
-        where: FindOptionsWhere<Item>
-    ) {
-        return this.repo.exists({
-            where
-        })
-    }
-
     /**
      * 
      * @param context 
@@ -192,28 +135,70 @@ export default class ItemQuery {
 
     /**
      * 
-     * COUNT
-     * 
-     */
-
-    count(
-        where: FindOptionsWhere<Item>
-    ) {
-        return this.repo.count({
-            where
-        })
-    }
-
-    /**
-     * 
      * SAVERS
      * 
      */
 
     /**
      * 
+     * Sobreescribimos el save method,
+     * para que cree las entidades vinculadas
+     * a la existencia de un product item
+     * 
+     * @param orm 
+     * @returns 
+     */
+
+    async save(
+        ...orm : DeepPartial<Item>[]
+    ){
+        const entities = await super.save(...orm);
+
+        await this.event.emitCreated(
+            entities.map(
+                ({id}) => id
+            )
+        )
+
+        return entities;
+    }
+
+    /**
+     * 
+     * @param orm 
+     * @returns
+     */
+
+    async saveOne(
+        params: OrmParams
+    ): Promise<Item> {
+
+        return this.resolveSaveOne(params);
+
+    }
+
+    /**
+     * 
+     * @param orm 
+     */
+
+    async saveManyAndReturnIds(
+        orm: DeepPartial<Item>[]
+    ) {
+
+        const entities = await this.save(
+            ...orm
+        )
+
+        return entities.map(({id}) => id);
+
+    }
+
+    /**
+     * 
      * Prepara los datos para la creacion
-     * de los productItems y luego los guarda
+     * de los productItems desde el feature context
+     * y luego los guarda
      * 
      * @param product 
      * @param features 
@@ -239,61 +224,7 @@ export default class ItemQuery {
             featureGroupId
         )
 
-        return this.saveMany(
-            orm
-        )
-
-    }
-
-    /**
-     * 
-     * Guarda los product items dados
-     * 
-     * @param payload 
-     * @returns 
-     */
-
-    async saveMany(
-
-        params: OrmParams[]
-
-    ): Promise<string[]> {
-
-        const orm = this.makeManyOrm(params);
-
-        return this.dataSource.transaction(async manager => {
-
-            const items = await manager.save(
-                Item,
-                orm,
-                {
-
-                }
-            );
-
-            return items.map(item => item.id);
-
-        })
-
-    }
-
-    /**
-     * 
-     * @param orm 
-     * @returns
-     */
-
-    async saveOne(
-        params: OrmParams
-    ): Promise<Item> {
-
-        const orm = this.makeOrm(params);
-
-        const productItemDraft = this.repo.create(orm)
-
-        const productItem = await this.repo.save(productItemDraft);
-
-        return productItem;
+        return this.saveManyAndReturnIds(orm);
 
     }
 
@@ -314,29 +245,14 @@ export default class ItemQuery {
      */
 
     async updateOne(
-        itemId: string,
-        orm: SafeUpdateOrm,
-        returning: string[] | string = "*"
+        id: string,
+        params: UpdateParams
     ): Promise<Item> {
 
-        const { raw, affected } = await this.repo
-            .createQueryBuilder()
-            .update(Item)
-            .set(orm)
-            .where("id = :itemId", { itemId })
-            .returning(returning)
-            .execute()
-
-        if (!affected) {
-            throw new BadRequestException("Product Item was not affected");
-        }
-
-        const entity = this.repo.merge(
-            new Item(),
-            raw[0]
+        return this.resolveUpdate(
+            {id},
+            params
         )
-
-        return entity;
 
     }
 
@@ -350,7 +266,7 @@ export default class ItemQuery {
      * @returns 
      */
 
-    private async updateMany(
+    async updateMany(
         orm: DeepPartial<Item>[]
     ): Promise<Item[]> {
 
@@ -370,6 +286,82 @@ export default class ItemQuery {
         )
 
         return productItems;
+
+    }
+
+    /**
+     * 
+     * Actualiza un mismo contenido
+     * para multiples coincidencias dado
+     * un contexto
+     * 
+     * @param params 
+     * @param orm 
+     * @param returning 
+     * @returns 
+     */
+
+    async updateSameContent(
+        contextParams: UpdateSameContentParams,
+        updateParams: UpdateParams,
+        returning: string[] | string = "*"
+    ) {
+
+        const {
+            itemGroupId,
+            itemsId,
+            productId
+        } = contextParams;
+
+        const orm = this.makeOrm(updateParams);
+
+        const query = this.repo
+            .createQueryBuilder()
+            .update(Item)
+            .set(orm);
+
+        query.where("1=1");
+
+        if (itemGroupId) {
+            const sq = this.filterByItemGroupSubQuery(
+                itemGroupId
+            )
+
+            query.andWhere(
+                `id IN (${sq.getQuery()})`
+            )
+                .setParameters(
+                    sq.getParameters()
+                )
+        }
+
+        if (itemsId) {
+            query.andWhere(
+                "id IN (:...itemsId)",
+                {
+                    itemsId
+                }
+            )
+        }
+
+        if (productId) {
+            query.andWhere(
+                "productId = :productId",
+                {
+                    productId
+                }
+            )
+        }
+
+        const { raw, affected } = await query
+            .returning(returning)
+            .execute()
+
+        if (!affected) {
+            throw new BadRequestException("Product Items was not affected");
+        }
+
+        return this.repo.create(raw);
 
     }
 
@@ -454,7 +446,7 @@ export default class ItemQuery {
         const subquery = this.repo
             .createQueryBuilder("item")
             .innerJoin("item.featureValues", "fv")
-            .andWhere("fv.id IN (:...valuesId)", { valuesId: featureValuesId })
+            .where("fv.id IN (:...valuesId)", { valuesId: featureValuesId })
             .groupBy("item.id")
             .having("COUNT(DISTINCT fv.id) = :count", {
                 count: featureValuesId.length
@@ -467,8 +459,37 @@ export default class ItemQuery {
 
     /**
      * 
+     * @param groupId 
+     * @returns 
+     */
+
+    filterByItemGroupSubQuery(
+        groupId: string
+    ): SelectQueryBuilder<Item> {
+        const subquery = this.repo
+            .createQueryBuilder()
+            .subQuery()
+            .select("filteredItem.id")
+            .from(Item, "filteredItem")
+            .innerJoin("filteredItem.groups", "filteredItemGroup")
+            .where("filteredItemGroup.id = :filteredGroupId", {
+                filteredGroupId: groupId
+            });
+
+        return subquery;
+    }
+
+    /**
+     * 
      * HELPERS
      * 
+     */
+
+    /**
+     * 
+     * @param context 
+     * @param strictFeatureValues 
+     * @returns 
      */
 
     private buildFeatureContextQuery(
@@ -496,7 +517,7 @@ export default class ItemQuery {
             });
         }
 
-        if (featureId) {
+        if (!strictFeatureValues && featureId) {
             qb.andWhere("fv.featureId = :featureId", {
                 featureId
             });
@@ -525,6 +546,14 @@ export default class ItemQuery {
 
         return qb;
     }
+
+    /**
+     * 
+     * @param productId 
+     * @param combinations 
+     * @param featureGroupId 
+     * @returns 
+     */
 
     private async prepareByFeatureContext(
         productId: string,
@@ -586,6 +615,7 @@ export default class ItemQuery {
         featureValuesId,
         projectId,
         groupId,
+        costId,
         ...rest
     }: OrmParams): DeepPartial<Item> {
 
@@ -620,6 +650,12 @@ export default class ItemQuery {
             orm.groups = [{
                 id: groupId
             }]
+        }
+
+        if (costId) {
+            orm.cost = {
+                id: costId
+            }
         }
 
         return orm;

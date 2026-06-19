@@ -1,4 +1,4 @@
-import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
+import { DatabaseSchemas } from "@/common/enum/db/database-schemas.enum";
 import { Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({

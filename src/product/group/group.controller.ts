@@ -3,12 +3,12 @@ import CreateDto from "./dto/create.dto";
 import { GroupService } from "./group.service";
 import { AccessPolicies } from "@/access/decorators/access.decorator";
 import { ProjectMainPolicie } from "@/access/policies/project/main.policie";
-import { CurrentProject } from "@/common/decorators/token.decorator";
+import { CurrentProject } from "@/common/decorators/access/token.decorator";
 import { RelationsConfig, RelationsRule } from "@/relations/decorators/relations.decorator";
 import UpdateDto from "./dto/update.dto";
 import { StripUndefinedPipe } from "@/common/pipes/stripe-undefined.pipe";
 import { Paths } from "../constants/paths";
-import { joinPaths } from "@/common/helpers/path.helper";
+import { joinPaths } from "@/common/helpers/http/path.helper";
 import GetDto from "./dto/get.dto";
 import GroupSearch from "./group.search";
 

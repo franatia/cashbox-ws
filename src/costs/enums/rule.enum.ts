@@ -1,0 +1,21 @@
+export enum RuleOperator {
+    ADDITION = "ADDITION",
+    SUBTRACTION = "SUBTRACTION",
+    MULTIPLICATION = "MULTIPLICATION",
+    DIVISION = "DIVISION",
+    SUMMATION = "SUMMATION"
+}
+export const RuleOperatorList = Object.values(RuleOperator);
+
+export enum RuleTag {
+    FIX_TAX = "FIX_TAX",
+    TAX = "TAX",
+    TAX_EXEMPT = "TAX_EXEMPT",
+    SPECIFIC_TAX = "SCPECIFI_TAX",
+    TAX_BASE = "TAX_BASE",
+    ACQUISITION_COST = "ACQUISITION_COST",
+    PRE_TAX_ACQUISITION_COST = "PRE_TAX_ACQUISITION_COST",
+    PARTIAL_ACQUISITION_COST = "PARTIAL_ACQUISITION_COST",
+    ITEM_CONTAINER = "ITEM_CONTAINER"
+}
+export const RuleTagList = Object.values(RuleTag);

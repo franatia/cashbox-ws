@@ -2,8 +2,8 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Group } from "../entities/group.entity";
 import { DeepPartial, FindOneOptions, FindOptionsWhere, Repository } from "typeorm";
-import { buildSlug } from "@/common/helpers/slug.helper";
-import { isEmptyObjectAndThrow } from "@/common/helpers/params.helper";
+import { buildSlug } from "@/common/helpers/entities/slug.helper";
+import { notObjectEmpty } from "@/common/helpers/object.helper";
 
 /**
  * 
@@ -120,7 +120,7 @@ export default class GroupQuery {
         params: OrmParams
     ): Promise<Group> {
 
-        isEmptyObjectAndThrow(params);
+        notObjectEmpty(params);
 
         const orm = await this.prepareOrm({
             ...params
@@ -144,7 +144,7 @@ export default class GroupQuery {
         returning: string[] | string = "*"
     ): Promise<Group> {
 
-        isEmptyObjectAndThrow(params);
+        notObjectEmpty(params);
 
         const {
             productsId,

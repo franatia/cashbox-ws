@@ -1,7 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { AccessService } from './access.service';
 import { AccessController } from './access.controller';
-import { ProjectModule } from '@/projects/project.module';
+import { ProjectModule } from '@/project/project.module';
 import { AccessGuard } from './guards/access.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from '@/auth/auth.module';

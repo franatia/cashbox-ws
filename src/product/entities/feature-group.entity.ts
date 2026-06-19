@@ -2,7 +2,7 @@ import { CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn 
 import ProductFeatureGroupItem from "./feature-group-item.entity";
 import { ItemGroup } from "./item-group.entity";
 import { Product } from "./product.entity";
-import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
+import { DatabaseSchemas } from "@/common/enum/db/database-schemas.enum";
 import FeatureGroupItem from "./feature-group-item.entity";
 
 @Entity({

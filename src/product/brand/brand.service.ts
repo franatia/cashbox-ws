@@ -1,6 +1,6 @@
 import { DeepPartial, FindOptionsWhere, MissingDeleteDateColumnError, Repository } from "typeorm";
 import CreateDto from "./dto/create.dto";
-import { buildSlug } from "@/common/helpers/slug.helper";
+import { buildSlug } from "@/common/helpers/entities/slug.helper";
 import { InjectRepository } from "@nestjs/typeorm";
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { Brand } from "../entities/brand.entity";

@@ -60,16 +60,6 @@ export default class ItemGroupSearch {
             "product"
         )
 
-        query.innerJoin(
-            "itemGroup.items",
-            "item"
-        )
-
-        query.leftJoin(
-            "item.featureValues",
-            "piFeatureValue"
-        )
-
         if (projectId || productId) {
             query.innerJoin(
                 "product.project",
@@ -88,6 +78,11 @@ export default class ItemGroupSearch {
                 "featureValue"
             )
         }
+
+        query.leftJoin(
+            "featureValue.feature", 
+            "feature"
+        )
 
     }
 
@@ -151,8 +146,8 @@ export default class ItemGroupSearch {
                 query,
                 searchText
             )
-        }else{
-            query
+        } else {
+            query.orderBy("itemGroup.createdAt", "DESC")
         }
 
         if (type) {
@@ -160,9 +155,8 @@ export default class ItemGroupSearch {
         }
 
         query.distinct(true)
-        .orderBy("itemGroup.createdAt", "DESC")
-        .skip(skip)
-        .take(take)
+            .skip(skip)
+            .take(take)
 
     }
 
@@ -180,18 +174,20 @@ export default class ItemGroupSearch {
                 "productFeatureGroup",
             ]
         })
-            .addSelect([
+            .select([
+                "itemGroup.id",
+                "itemGroup.createdAt",
                 "itemGroup.name",
                 "itemGroup.type",
                 "itemGroup.webVisibility",
                 "itemGroup.basePrice",
-                "featureValue.id",
+
                 "featureValue.value",
-                "item.id",
-                "item.sku",
-                "item.name",
-                "piFeatureValue.id",
+                "feature.name",
+                
                 "piFeatureValue.value",
+                "piFeature.name",
+
                 "product.id",
                 "product.name",
                 "product.subtractType",
@@ -255,9 +251,9 @@ export default class ItemGroupSearch {
     ) {
         const query = this.repo.createQueryBuilder("itemGroup");
 
+        this.applySelectors(query);
         this.applyJoins(query, params);
         this.applyFilters(query, params);
-        this.applySelectors(query);
 
         const items = await query.getMany();
 

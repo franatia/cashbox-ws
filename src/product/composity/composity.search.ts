@@ -2,8 +2,8 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import Composity from "../entities/composity.entity";
 import { Repository } from "typeorm";
-import { BasicSearchParams } from "@/common/interfaces/search-params.interface";
-import { isEmptyAndThrow } from "@/common/helpers/search-params.helper";
+import { BasicSearchParams } from "@/common/types/params/search-params.type";
+import { notSearchParamsEmpty } from "@/common/helpers/params/search-params.helper";
 import { SelectQueryBuilder } from "typeorm/browser";
 
 type SearchParams = {
@@ -100,9 +100,9 @@ export default class CompositySearch {
 
         const query = this.repo.createQueryBuilder("composity");
 
+        this.applySelectors(query);
         this.applyJoins(query)
         this.applyFilters(query, params);
-        this.applySelectors(query);
 
         return query.getMany();
 
@@ -112,7 +112,7 @@ export default class CompositySearch {
         params: SearchParams
     ) {
 
-        isEmptyAndThrow(params);
+        notSearchParamsEmpty(params);
 
         return this.search(params);
     }

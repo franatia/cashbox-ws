@@ -1,7 +1,7 @@
-import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
+import { DatabaseSchemas } from "@/common/enum/db/database-schemas.enum";
 import { Column, CreateDateColumn, Entity, JoinColumn, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import Session from "./session.entity";
-import { Project } from "@/projects/entities/project.entity";
+import { Project } from "@/project/entities/project.entity";
 
 @Entity({
     name: "users",
@@ -10,6 +10,11 @@ import { Project } from "@/projects/entities/project.entity";
 export class User {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
+
+    @CreateDateColumn({
+        type : "timestamptz"
+    })
+    createdAt !: Date;
 
     @Column({
         type: "text",
@@ -27,22 +32,19 @@ export class User {
         type: "text",
         nullable: true
     })
-    username!: string | null;
+    username ?: string;
 
     @Column({
         type: "text",
         nullable: true
     })
-    imageProfile!: string | null;
+    imageProfile ?: string;
     
     @OneToMany(
         () => Session, 
         (session) => session.user
     )
     sessions!: Session[]
-
-    @CreateDateColumn({ type: "timestamptz" })
-    createdAt!: Date
 
     @OneToMany(
         () => Project,

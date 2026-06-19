@@ -1,12 +1,10 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { CreateAccessDto } from './dto/create-access.dto';
-import { UpdateAccessDto } from './dto/update-access.dto';
 import { Brackets, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Project } from '@/projects/entities/project.entity';
-import { Node } from '@/projects/entities/node.entity';
-import { CollaboratorRole } from '@/projects/entities/collaborator.entity';
+import { Project } from '@/project/entities/project.entity';
+import { Node } from '@/project/entities/node.entity';
 import { AccessRoles } from '@/access/decorators/access.decorator';
+import { CollaboratorRole } from '@/project/enums/roles.enum';
 
 @Injectable()
 export class AccessService {

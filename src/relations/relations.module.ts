@@ -2,13 +2,19 @@ import { Module } from '@nestjs/common';
 import { RelationsGuard } from './relations.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { RelationsEngine } from './relations.engine';
-import { ProjectModule } from '@/projects/project.module';
+import { ProjectModule } from '@/project/project.module';
 import { ProductModule } from '@/product/product.module';
+import { TaxModule } from '@/tax/tax.module';
+import { CostsModule } from '@/costs/costs.module';
+import { StockModule } from '@/stock/stock.module';
 
 @Module({
   imports: [
     ProjectModule,
-    ProductModule
+    ProductModule,
+    TaxModule,
+    CostsModule,
+    StockModule
   ],
   providers: [
     RelationsGuard,

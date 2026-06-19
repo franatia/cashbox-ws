@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import Composity from "../entities/composity.entity";
-import { DeepPartial, FindOneOptions, FindOptions, FindOptionsWhere, Repository } from "typeorm";
-import { isEmptyObjectAndThrow } from "@/common/helpers/params.helper";
+import { DeepPartial, FindOneOptions, FindOptionsWhere, Repository } from "typeorm";
+import { notObjectEmpty } from "@/common/helpers/object.helper";
 
 export type OrmParams = {
     productId ?: string,
@@ -90,7 +90,7 @@ export default class ComposityQuery {
     saveOne(
         params : OrmParams
     ){
-        isEmptyObjectAndThrow(params);
+        notObjectEmpty(params);
 
         const orm = this.makeOrm(params);
 
@@ -107,7 +107,7 @@ export default class ComposityQuery {
         params : OrmParams[]
     ){
         
-        params.forEach(param => (isEmptyObjectAndThrow(param)));
+        params.forEach(param => (notObjectEmpty(param)));
 
         const orm = this.makeManyOrm(params);
 
@@ -135,7 +135,7 @@ export default class ComposityQuery {
         returning : string[] | string = "*"
     ){
         
-        isEmptyObjectAndThrow(orm);
+        notObjectEmpty(orm);
 
         const {raw, affected} = await this.repo.createQueryBuilder()
             .update(Composity)

@@ -143,9 +143,9 @@ export class FeatureGroupSearch {
         } = params;
         const query = this.repo.createQueryBuilder("featureGroup");
 
+        this.applySelectors(query);
         this.applyJoins(query);
         await this.applyFilters(query, params);
-        this.applySelectors(query);
 
         return query
         .skip(skip)

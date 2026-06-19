@@ -1,0 +1,99 @@
+{
+    "operator": "ADDITION",
+    "tags": [
+        "ACQUISITION_COST"
+    ],
+    "children": [
+        {
+            "operator": "SUMMATION",
+            "tags": [
+                "PARTIAL_ACQUISTION_COST"
+            ],
+            "children": [
+                {
+                    "operator": "MULTIPLICATION",
+                    "tags": [
+                        "ACQUISITION_COST"
+                    ],
+                    "children": [
+                        {
+                            "operator": "ADDITION",
+                            "tags": [
+                                "PRE_TAX_ACQUISITION_COST"
+                            ],
+                            "items": [
+                                {
+                                    "tags": [
+                                        "PRODUCT_BASE_COST"
+                                    ],
+                                    "value": 100.00,
+                                    "name": "Costo base"
+                                },
+                                {
+                                    "tags": [
+                                        "SHIPPING"
+                                    ],
+                                    "value": 10.00,
+                                    "name": "Envio"
+                                }
+                            ]
+                        },
+                        {
+                            "operator": "ADDITION",
+                            "tags": [
+                                "TAX"
+                            ],
+                            "items": [
+                                {
+                                    "tags": [
+                                        "OTHER"
+                                    ],
+                                    "value": 1
+                                },
+                                {
+                                    "tags": [
+                                        "TAX"
+                                    ],
+                                    "value": 0.21,
+                                    "name": "IVA Producto",
+                                    "denomination": "IVA",
+                                    "authorityReferenceCode": "5"
+                                },
+                                {
+                                    "tags": [
+                                        "TAX"
+                                    ],
+                                    "value": 0.3,
+                                    "name": "Ingresos Brutos",
+                                    "denomination": "IBBI",
+                                    "authorityReferenceCode": "1"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "operator": "ADDITION",
+            "tags": [
+                "PARTIAL_ACQUISTION_COST",
+                "TAX_EXEMPT"
+            ],
+            "items": [
+                {
+                    "tags": [
+                        "OTHER"
+                    ],
+                    "value": 100.40
+                },
+                {
+                    "tags": [
+                        "OTHER"
+                    ],
+                    "value": 500.30
+                }
+            ]
+        }
+    ]
+}

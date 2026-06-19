@@ -4,7 +4,7 @@ import { Complement } from "../entities/complement.entity";
 import { Repository } from "typeorm";
 import { SelectQueryBuilder } from "typeorm/browser";
 import { ComplementItemSearch } from "./complement-item.search";
-import { isEmptyAndThrow } from "@/common/helpers/search-params.helper";
+import { notSearchParamsEmpty } from "@/common/helpers/params/search-params.helper";
 
 type SearchParams = {
     productId?: string,
@@ -93,15 +93,15 @@ export class ComplementSearch {
 
         const query = this.repo.createQueryBuilder("complement");
 
+        this.applySelectors(
+            query
+        )
         this.applyJoins(
             params,
             query
         );
         this.applyFilters(
             params,
-            query
-        )
-        this.applySelectors(
             query
         )
 
@@ -113,7 +113,7 @@ export class ComplementSearch {
         params : SearchParams
     ){
 
-        isEmptyAndThrow(params);
+        notSearchParamsEmpty(params);
 
         return this.search(params);
     }

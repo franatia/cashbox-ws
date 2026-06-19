@@ -11,7 +11,7 @@ export const policieValidator = async (
 ) => {
 
     const { freeNull = false, firstMatch = false } = config;
-    const isOptional = freeNull || firstMatch
+    const isOptional = freeNull || firstMatch;
 
     const softPath = `${path}${isOptional ? "?" : ""}`
 

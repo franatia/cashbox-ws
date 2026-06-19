@@ -3,7 +3,7 @@ import { ComplementItem } from "../entities/complement-item.entity";
 import { Repository } from "typeorm";
 import { SelectQueryBuilder } from "typeorm/browser";
 import { Injectable } from "@nestjs/common";
-import { isEmptyAndThrow } from "@/common/helpers/search-params.helper";
+import { notSearchParamsEmpty } from "@/common/helpers/params/search-params.helper";
 
 type SearchParams = {
     id?: string,
@@ -113,9 +113,9 @@ export class ComplementItemSearch {
             "item"
         )
 
+        this.applySelectors(query);
         this.applyJoins(query);
         this.applyFilters(params, query);
-        this.applySelectors(query);
 
         return query.getMany();
 
@@ -125,7 +125,7 @@ export class ComplementItemSearch {
         params : SearchParams
     ){
     
-        isEmptyAndThrow(
+        notSearchParamsEmpty(
             params
         );
 

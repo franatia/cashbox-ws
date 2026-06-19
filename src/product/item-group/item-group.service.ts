@@ -10,8 +10,9 @@ import UpdateDto from "./dto/update.dto"
 import UpdateFeatureValuesDto from "./dto/update-feature-values.dto"
 import UpdateItemsDto from "./dto/update-items.dto"
 import ItemGroupQuery from "./item-group.query"
-import ItemQuery from "../item/item.query"
+import {ItemQuery} from "../item/item.query"
 import FeatureGroupQuery from "../feature-group/feature-group.query"
+import { notObjectEmpty } from "@/common/helpers/object.helper"
 
 /**
  * 
@@ -56,6 +57,7 @@ export class ItemGroupService {
 
     constructor(
 
+        @Inject(forwardRef(() => ItemService))
         private readonly itemService: ItemService,
 
         @Inject(forwardRef(() => ItemQuery))
@@ -73,12 +75,12 @@ export class ItemGroupService {
      * 
      */
 
-    linkedToProject(
+    async linkedToProject(
         groupId: string,
         productId: string,
         throwable: boolean = true
     ): Promise<boolean> {
-        const exists = this.query.exists({
+        const exists = await this.query.exists({
             id: groupId,
             product: {
                 project: {
@@ -106,17 +108,15 @@ export class ItemGroupService {
      * @returns 
      */
 
-    async hasType(
-        groupId: string,
-        groupType: ItemGroupType
+    async hasTypes(
+        id: string,
+        ...types: ItemGroupType[]
     ): Promise<boolean> {
 
-        const exists = await this.query.exists({
-            id: groupId,
-            type: groupType
+        return this.query.exists({
+            id: id,
+            type: In(types)
         })
-
-        return exists;
 
     }
 
@@ -432,21 +432,11 @@ export class ItemGroupService {
         dto: UpdateDto
     ) {
 
-        if (!Object.entries(dto).length) return;
-
-        const {
-            basePrice,
-            name,
-            webVisibility
-        } = dto;
+        notObjectEmpty(dto);
 
         return this.query.updateOne(
             groupId,
-            {
-                basePrice,
-                name,
-                webVisibility
-            }
+            dto
         );
 
     }
@@ -472,15 +462,6 @@ export class ItemGroupService {
         const {
             featureValuesId
         } = dto;
-
-        const isFeaturesType = await this.hasType(
-            groupId,
-            ItemGroupType.FEATURES
-        )
-
-        if (!isFeaturesType) {
-            throw new BadRequestException("Product item group is not a features type group");
-        }
 
         await this.query.setFeatureValues(
             groupId,
@@ -551,13 +532,7 @@ export class ItemGroupService {
         groupId: string
     ) {
 
-        return this.query.deleteOne({
-            id: groupId,
-            type: In([
-                ItemGroupType.FEATURES,
-                ItemGroupType.ITEMS
-            ])
-        })
+        return this.query.deleteOne(groupId)
 
     }
 

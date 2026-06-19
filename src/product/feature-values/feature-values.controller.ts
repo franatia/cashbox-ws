@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from "@nestjs/common";
 import { FeatureValuesService } from "./feature-values.service";
-import { joinPaths } from "@/common/helpers/path.helper";
+import { joinPaths } from "@/common/helpers/http/path.helper";
 import { Paths } from "../constants/paths";
 import { RelationsConfig, RelationsRule } from "@/relations/decorators/relations.decorator";
 import { CreateDto } from "./dto/create.dto";

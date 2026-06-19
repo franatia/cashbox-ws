@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ProductController } from './core/product.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
@@ -8,7 +8,7 @@ import { Group } from './entities/group.entity';
 import { Feature } from './entities/feature.entity';
 import { FeatureValue } from './entities/feature-value.entity';
 import { Brand } from './entities/brand.entity';
-import { ProjectModule } from '@/projects/project.module';
+import { ProjectModule } from '@/project/project.module';
 import { Complement } from './entities/complement.entity';
 import { ProductService } from './core/product.service';
 import { FeaturesService } from './features/features.service';
@@ -29,7 +29,7 @@ import { FeaturesController } from './features/features.controller';
 import FeatureValuesController from './feature-values/feature-values.controller';
 import { FeatureGroupController } from './feature-group/feature-group.controller';
 import { FeatureGroupSearch } from './feature-group/feature-group.search';
-import ItemQuery from './item/item.query';
+import {ItemQuery} from './item/item.query';
 import FeatureGroupQuery from './feature-group/feature-group.query';
 import FeatureValuesQuery from './feature-values/feature-values.query';
 import FeaturesQuery from './features/features.query';
@@ -51,6 +51,8 @@ import GroupQuery from './group/group.query';
 import FeatureSearch from './features/features.search';
 import FeatureValuesSearch from './feature-values/feature-values.search';
 import GroupController from './group/group.controller';
+import { StockModule } from '@/stock/stock.module';
+import { ItemEvent } from './item/event-listener/item.event';
 
 @Module({
   imports: [
@@ -68,7 +70,8 @@ import GroupController from './group/group.controller';
       FeatureGroup,
       FeatureGroupItem
     ]),
-    ProjectModule
+    forwardRef(() => ProjectModule),
+    forwardRef(() => StockModule),
   ],
   controllers: [
     ItemGroupController,
@@ -89,6 +92,7 @@ import GroupController from './group/group.controller';
     ItemService,
     ItemSearch,
     ItemQuery,
+    ItemEvent,
 
     ItemGroupService,
     ItemGroupSearch,

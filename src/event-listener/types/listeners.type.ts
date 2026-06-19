@@ -1,0 +1,1 @@
+export type ListenerFunction = (payload : any) => Promise<void>;

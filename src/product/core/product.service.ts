@@ -3,8 +3,9 @@ import { CreateDto } from './dto/create.dto';
 import { Product } from '../entities/product.entity';
 import { In } from 'typeorm';
 import { UpdateDto } from './dto/update.dto';
-import { buildSlug } from '@/common/helpers/slug.helper';
+import { buildSlug } from '@/common/helpers/entities/slug.helper';
 import ProductQuery from './product.query';
+import { notObjectEmpty } from '@/common/helpers/object.helper';
 
 
 
@@ -130,6 +131,8 @@ export class ProductService {
     productId: string,
     dto: UpdateDto
   ): Promise<Product> {
+
+    notObjectEmpty(dto);
 
     const product = await this.query.updateOne(
       productId,

@@ -1,4 +1,4 @@
-import { JwtTypes } from "@/common/constants/jwt-types.enum";
+import { JwtTypes } from "@/common/enum/token/jwt-types.enum";
 import AuthConfig from "@/config/interfaces/auth.config.interface";
 import { BadRequestException, GoneException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
@@ -7,6 +7,8 @@ import { ExtractJwt, Strategy } from "passport-jwt";
 import { AuthStage } from "@/auth/enums/auth-stage.enum";
 import JwtRefreshPayload from "../interfaces/jwt-refresh-payload.interface";
 import { AuthService } from "../auth.service";
+import { ClsService } from "nestjs-cls";
+import { ClsKeys } from "@/common/enum/cls/cls.enum";
 
 @Injectable()
 export default class JwtRefreshStrategy extends PassportStrategy(Strategy, JwtTypes.jwtRefresh) {
@@ -14,7 +16,9 @@ export default class JwtRefreshStrategy extends PassportStrategy(Strategy, JwtTy
     constructor(
 
         private readonly authService : AuthService,
-        configService: ConfigService
+        configService: ConfigService,
+
+        private readonly cls : ClsService
 
     ) {
 
@@ -37,8 +41,15 @@ export default class JwtRefreshStrategy extends PassportStrategy(Strategy, JwtTy
         const exists = this.authService.existsUser(id);
 
         if(!exists) throw new GoneException("User does not exists");
-
+        
+        this.saveToCls(payload);
         return payload;
+    }
+
+    private saveToCls(
+        payload : JwtRefreshPayload
+    ){
+        this.cls.set(ClsKeys.USER_TOKEN, payload);
     }
 
 }

@@ -1,17 +1,13 @@
 import { BadRequestException, forwardRef, Inject, Injectable } from "@nestjs/common";
 import CreateFeatureGroupDto from "./dto/create.dto";
-import { InjectRepository } from "@nestjs/typeorm";
-import { DeepPartial, FindManyOptions, FindOneOptions, In, Repository } from "typeorm";
-import { DataSource } from "typeorm";
-import { FeatureGroup } from "../entities/feature-group.entity";
+import { DeepPartial, In } from "typeorm";
 import { ItemService } from "../item/item.service";
 import FeatureGroupItem from "../entities/feature-group-item.entity";
-import { FeatureDto } from "../features/dto/feature.dto";
 import { ItemGroupService } from "../item-group/item-group.service";
 import { FeaturesService } from "../features/features.service";
 import { ContextFeatureDto } from "./dto/context-feature.dto";
 import FeatureGroupQuery, { ItemOrmParams } from "./feature-group.query";
-import ItemQuery from "../item/item.query";
+import {ItemQuery} from "../item/item.query";
 import ItemGroupQuery from "../item-group/item-group.query";
 
 type CreateFeatureContextParams = {
@@ -25,6 +21,7 @@ export class FeatureGroupService {
 
         private readonly query: FeatureGroupQuery,
 
+        @Inject(forwardRef(() => ItemService))
         private readonly productItemService: ItemService,
 
         @Inject(forwardRef(() => ItemQuery))

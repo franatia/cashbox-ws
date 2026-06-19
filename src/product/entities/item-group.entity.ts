@@ -1,9 +1,10 @@
-import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
+import { DatabaseSchemas } from "@/common/enum/db/database-schemas.enum";
 import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Item } from "./item.entity";
 import { FeatureValue } from "./feature-value.entity";
 import { Product } from "./product.entity";
 import { FeatureGroup } from "./feature-group.entity";
+import DecimalColumn from "@/common/decorators/orm/decimal-column.decorator";
 
 export enum ItemGroupType {
     FEATURES = "features",
@@ -42,11 +43,15 @@ export class ItemGroup {
     })
     webVisibility!: boolean;
 
-    @Column({
-        type: "int",
-        nullable: true
+    @DecimalColumn({
+        default: 0
     })
     basePrice?: number;
+
+    @DecimalColumn({
+        default: 0
+    })
+    baseCost !: number;
 
     @ManyToOne(
         () => Product,

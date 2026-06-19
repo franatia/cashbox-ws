@@ -2,7 +2,8 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Product, ProductSubtractType, ProductUnit } from "../entities/product.entity";
 import { DeepPartial, FindOneOptions, FindOptionsWhere, Repository } from "typeorm";
-import { isEmptyObjectAndThrow } from "@/common/helpers/params.helper";
+import {BaseQuery} from "@/common/models/crud/query/base-query.crud";
+import { ItemService } from "../item/item.service";
 
 /**
  * 
@@ -36,18 +37,21 @@ type SafeUpdateOrm = {
   visibility?: boolean;
   subtractType?: ProductSubtractType;
   unit?: ProductUnit;
+  costId ?: string;
 }
 
 @Injectable()
-export default class ProductQuery {
+export default class ProductQuery extends BaseQuery<Product> {
     constructor(
         @InjectRepository(Product)
-        private readonly repo: Repository<Product>,
-    ) {
+        repo: Repository<Product>,
 
+        private readonly itemService : ItemService
+    ) {
+        super(Product, repo);
     }
 
-    /**
+  /**
    * 
    * FIND
    * 
@@ -148,22 +152,26 @@ export default class ProductQuery {
 
     async updateOne(
         productId: string,
-        orm: SafeUpdateOrm,
-        returning: string | string[] = "*"
+        orm: SafeUpdateOrm
     ): Promise<Product> {
 
-        isEmptyObjectAndThrow(orm);
+        const {
+            costId,
+            ...rest
+        } = orm;
 
-        const { raw, affected } = await this.repo
-            .createQueryBuilder()
-            .update(Product)
-            .set(orm)
-            .where("id = :productId", { productId })
-            .returning(returning)
-            .execute()
+        const raw = await this.resolveUpdate(
+            {productId},
+            rest
+        );
 
-        if (!affected) {
-            throw new BadRequestException("Product was not affected");
+        if(costId){
+            await this.itemService.putManyByProduct(
+                productId,
+                {
+                    costId
+                }
+            )
         }
 
         const entity = this.repo.merge(

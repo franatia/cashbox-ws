@@ -1,15 +1,12 @@
 import { BadRequestException, ForbiddenException, forwardRef, GoneException, Inject, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EmailToken, User } from './entities';
-import { FindOneOptions, FindOptionsWhere, Repository } from 'typeorm';
-import EmailDto from './dto/send-email.dto';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import MailManager from '@/mail/managers/mail.manager';
-import { buildAuthPayloadByUser, compareToken, generateEmailToken } from '@/common/helpers/token.helper';
-import { generateHash, match } from '@/common/helpers/hash.helper';
-import EmailTokenDto from './dto/auth-email.dto';
+import { buildAuthPayloadByUser, compareToken, generateEmailToken } from '@/common/helpers/token/token.helper';
+import { generateHash, match } from '@/common/helpers/token/hash.helper';
 import { addMinutes } from 'date-fns';
 import { JwtService } from '@nestjs/jwt';
-import { json } from 'stream/consumers';
 import { StringValue } from 'ms';
 import { AuthStage } from '@/auth/enums/auth-stage.enum';
 import LogInDto from './dto/log-in.dto';
@@ -17,7 +14,8 @@ import AuthDto from './dto/auth.dto';
 import AuthEmailDto from './dto/auth-email.dto';
 import AuthProjectContextDto from './dto/auth-project-context.dto';
 import JwtRefreshPayload from './interfaces/jwt-refresh-payload.interface';
-import { ProjectService } from '@/projects/project.service';
+import { ProjectFinder } from '@/project/core/query/project.finder';
+import { CollaboratorFinder } from '@/project/collaborator/query/collaborator.finder';
 
 @Injectable()
 export class AuthService {
@@ -32,8 +30,8 @@ export class AuthService {
     private readonly mailManager: MailManager,
     private readonly jwtService: JwtService,
 
-    @Inject(forwardRef(() => ProjectService))
-    private readonly projectService: ProjectService
+    private readonly projectFinder: ProjectFinder,
+    private readonly collaboratorFinder : CollaboratorFinder
   ) { }
 
   async findUser(payload: FindOptionsWhere<User>) {
@@ -225,13 +223,13 @@ export class AuthService {
       nodeId
     } = dto;
 
-    const isCollaborator = await this.projectService.isCollaborator(
+    const isCollaborator = await this.collaboratorFinder.existsByNullableContext({
       userId,
       projectId,
       nodeId
-    )
+    })
 
-    const isOwner = await this.projectService.isOwnerOfProject(
+    const isOwner = await this.projectFinder.existsByOwnerId(
       projectId,
       userId
     );

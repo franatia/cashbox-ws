@@ -1,4 +1,4 @@
-import { JwtTypes } from "@/common/constants/jwt-types.enum";
+import { JwtTypes } from "@/common/enum/token/jwt-types.enum";
 import AuthConfig from "@/config/interfaces/auth.config.interface";
 import { GoneException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";

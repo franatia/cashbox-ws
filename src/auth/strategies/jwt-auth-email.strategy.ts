@@ -6,7 +6,7 @@ import JwtAccessPayload from "../interfaces/jwt-auth-email-payload.interface";
 import { HttpException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { isEmail } from "class-validator";
 import { AuthStage } from "@/auth/enums/auth-stage.enum";
-import { JwtTypes } from "@/common/constants/jwt-types.enum";
+import { JwtTypes } from "@/common/enum/token/jwt-types.enum";
 
 @Injectable()
 export default class JwtAuthEmailStrategy extends PassportStrategy(Strategy, JwtTypes.jwtAuthEmail) {

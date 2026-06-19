@@ -1,8 +1,7 @@
 import { Payment } from "@/payment/entities/payment.entity";
-import { StockMovement } from "@/stock/entities/stock-movement.entity";
 import { Column, Entity, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { CashboxMovement } from "./cashbox-movement.entity";
-import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
+import { DatabaseSchemas } from "@/common/enum/db/database-schemas.enum";
 
 @Entity({
     schema: DatabaseSchemas.main,
@@ -27,15 +26,6 @@ export class CashboxMovementDetail {
         }
     )
     payment !: Payment;
-
-    @OneToOne(
-        () => StockMovement,
-        {
-            eager: false,
-            nullable: true
-        }
-    )
-    stockMovement!: StockMovement;
 
     @ManyToOne(
         () => CashboxMovement,

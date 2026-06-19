@@ -1,6 +1,6 @@
-import { Channel } from "@/common/constants/channel.enum";
-import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
-import { Project } from "@/projects/entities/project.entity";
+import { Channel } from "@/common/enum/channel.enum";
+import { DatabaseSchemas } from "@/common/enum/db/database-schemas.enum";
+import { Project } from "@/project/entities/project.entity";
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 export enum PriceListFactorType {

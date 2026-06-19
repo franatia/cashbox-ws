@@ -10,7 +10,7 @@ import Configuration from './config/interfaces/configuration.interface';
 import { Environment } from './config/interfaces/environment.enum';
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
-import { ProjectModule } from './projects/project.module';
+import { ProjectModule } from './project/project.module';
 import { ProductModule } from './product/product.module';
 import { OrderModule } from './order/order.module';
 import { PriceModule } from './price/price.module';
@@ -27,6 +27,10 @@ import { AccessModule } from './access/access.module';
 import { RelationsModule } from './relations/relations.module';
 import { FeatureSchemaModule } from './feature-schema/feature-schema.module';
 import { CatalogModule } from './catalog/catalog.module';
+import { ReserveModule } from './reserve/reserve.module';
+import { ComposityModule } from './composity/composity.module';
+import { ClsModule } from 'nestjs-cls';
+import { EventListenerModule } from './event-listener/event-listener.module';
 
 @Module({
   imports: [
@@ -35,6 +39,13 @@ import { CatalogModule } from './catalog/catalog.module';
       isGlobal: true,
       load: [configuration],
       validationSchema: envValidationSchema
+    }),
+
+    ClsModule.forRoot({
+      global: true,
+      middleware: {
+        mount: true,
+      },
     }),
 
     TypeOrmModule.forRootAsync({
@@ -62,6 +73,8 @@ import { CatalogModule } from './catalog/catalog.module';
       }
     }),
 
+    EventListenerModule,
+    
     AuthModule,
     UsersModule,
     MailModule,
@@ -79,9 +92,12 @@ import { CatalogModule } from './catalog/catalog.module';
     PaymentModule,
     CostsModule,
     AccessModule,
-    RelationsModule,
     FeatureSchemaModule,
-    CatalogModule
+    CatalogModule,
+    ReserveModule,
+    ComposityModule,
+    
+    RelationsModule,
   ],
   controllers: [AppController],
   providers: [

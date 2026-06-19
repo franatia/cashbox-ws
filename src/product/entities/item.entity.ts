@@ -1,4 +1,4 @@
-import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
+import { DatabaseSchemas } from "@/common/enum/db/database-schemas.enum";
 import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { FeatureValue } from "./feature-value.entity";
 import { Product } from "./product.entity";
@@ -6,6 +6,8 @@ import { ItemGroup } from "./item-group.entity";
 import { Price } from "@/price/entities/price.entity";
 import { Stock } from "@/stock/entities/stock.entity";
 import { FeatureGroup } from "./feature-group.entity";
+import { Cost } from "@/costs/entities/cost.entity";
+import DecimalColumn from "@/common/decorators/orm/decimal-column.decorator";
 
 @Entity({
     schema: DatabaseSchemas.product,
@@ -38,6 +40,16 @@ export class Item {
         default: true
     })
     webVisibility!: boolean;
+
+    @DecimalColumn({
+        default : 0
+    })
+    basePrice?: number;
+    
+    @DecimalColumn({
+        default: 0
+    })
+    baseCost !: number;
 
     @ManyToOne(
         () => Product,
@@ -102,5 +114,10 @@ export class Item {
     )
     stock?: Stock;
 
-
+    @ManyToOne(
+        () => Cost,
+        cost => cost.productItems
+    )
+    cost !: Cost;
+    
 }

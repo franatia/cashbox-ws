@@ -2,8 +2,8 @@ import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGenerate
 import { Cashbox } from "./cashbox.entity";
 import { User } from "@/auth/entities";
 import { CashboxMovementDetail } from "./cashbox-movement-detail.entity";
-import { MovementDirection } from "@/common/constants/movement-direction.enum";
-import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
+import { OperationDirection } from "@/common/enum/operation.enum";
+import { DatabaseSchemas } from "@/common/enum/db/database-schemas.enum";
 
 export enum CashboxMovementType {
     DEPOSIT = "DEPOSIT",
@@ -46,9 +46,9 @@ export class CashboxMovement {
 
     @Column({
         type: "enum",
-        enum: MovementDirection
+        enum: OperationDirection
     })
-    direction!: MovementDirection;
+    direction!: OperationDirection;
 
     @CreateDateColumn({
         type: "timestamptz"

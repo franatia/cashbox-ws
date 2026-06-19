@@ -1,9 +1,9 @@
 import { PriceList } from "@/price/entities/price-list.entity";
 import { Product } from "@/product/entities/product.entity";
-import { Project } from "@/projects/entities/project.entity";
+import { Project } from "@/project/entities/project.entity";
 import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { LinkingCatalog } from "./linking-catalog.entity";
-import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
+import { DatabaseSchemas } from "@/common/enum/db/database-schemas.enum";
 
 @Entity({
     schema : DatabaseSchemas.catalog,

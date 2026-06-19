@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Query } from "@nestjs/common";
 import { ItemService } from "./item.service";
 import { Paths } from "../constants/paths";
-import { joinPaths } from "@/common/helpers/path.helper";
+import { joinPaths } from "@/common/helpers/http/path.helper";
 import CreateDto from "./dto/create.dto";
 import { AccessPolicies } from "@/access/decorators/access.decorator";
 import { ProjectMainPolicie } from "@/access/policies/project/main.policie";
@@ -9,8 +9,9 @@ import { RelationsConfig, RelationsRule } from "@/relations/decorators/relations
 import UpdateDto from "./dto/update.dto";
 import GetDto from "./dto/get.dto";
 import ItemSearch from "./item.search";
-import { CurrentProject } from "@/common/decorators/token.decorator";
+import { CurrentProject } from "@/common/decorators/access/token.decorator";
 import { StripUndefinedPipe } from "@/common/pipes/stripe-undefined.pipe";
+import UpdateManyDto from "./dto/update-many.dto";
 
 @Controller(joinPaths(Paths.PRODUCT, Paths.ITEMS))
 @AccessPolicies(
@@ -51,15 +52,27 @@ export default class ItemController {
      * 
      */
 
+    /**
+     * 
+     * @param itemId 
+     * @param dto 
+     * @returns 
+     */
+
     @RelationsConfig(
         {
             from: Paths.PARAM_ITEM_ID,
             to: "context.projectId",
             rule: RelationsRule.PRODUCT_ITEM_TO_PROJECT
+        },
+        {
+            from : "costId?",
+            to : "context.projectId",
+            rule : RelationsRule.COST_TO_PROJECT
         }
     )
     @Put(Paths.PARAM_ITEM)
-    async put(
+    put(
         @Param(Paths.PARAM_ITEM_ID, ParseUUIDPipe) itemId: string,
         @Body(new StripUndefinedPipe()) dto: UpdateDto
     ) {
@@ -67,6 +80,35 @@ export default class ItemController {
             itemId,
             dto
         );
+    }
+
+    /**
+     * 
+     * @param dto 
+     * @returns 
+     */
+
+    @RelationsConfig(
+        {
+            from : "itemsId[]",
+            to : "context.projectId",
+            rule : RelationsRule.PRODUCT_ITEMS_TO_PROJECT
+        },
+        {
+            from : "costId?",
+            to : "context.projectId",
+            rule : RelationsRule.COST_TO_PROJECT
+        }
+    )
+    @Put()
+    putMany(
+        @Body(new StripUndefinedPipe()) dto : UpdateManyDto
+    ){
+
+        return this.service.putMany(
+            dto
+        );
+
     }
 
     /**

@@ -2,16 +2,16 @@ import { CanActivate, ExecutionContext, ForbiddenException, Inject, Injectable, 
 import { Reflector } from "@nestjs/core";
 import { AccessService } from "../access.service";
 import { ACCESS_CONFIG_KEY, ACCESS_POLICIES_KEY, AccessConfigMetadata } from "@/access/decorators/access.decorator";
-import { IS_PUBLIC_KEY } from "@/common/decorators/public.decorator";
+import { IS_PUBLIC_KEY } from "@/common/decorators/access/public.decorator";
 import { AuthService } from "@/auth/auth.service";
-import { HeaderKeys } from "@/common/constants/header-keys.enum";
+import { HeaderKeys } from "@/common/enum/http/header-keys.enum";
 import { ConfigService } from "@nestjs/config";
 import Configuration from "@/config/interfaces/configuration.interface";
 import { JwtService } from "@nestjs/jwt";
 import JwtRefreshPayload from "@/auth/interfaces/jwt-refresh-payload.interface";
 import { AuthStage } from "@/auth/enums/auth-stage.enum";
 import { Policie } from "../policies/policie";
-import { Class } from "@/common/types/class.type";
+import { Class } from "@/common/types/abstract/class.type";
 import { AUTH_TYPE_KEY } from "@/auth/decorators/auth.decorator";
 import { AuthType } from "@/auth/enums/auth-type.enum";
 

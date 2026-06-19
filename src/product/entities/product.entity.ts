@@ -1,7 +1,7 @@
-import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
+import { DatabaseSchemas } from "@/common/enum/db/database-schemas.enum";
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Group } from "./group.entity";
-import { Project } from "@/projects/entities/project.entity";
+import { Project } from "@/project/entities/project.entity";
 import { Item } from "./item.entity";
 import { Feature } from "./feature.entity";
 import { ItemGroup } from "./item-group.entity";
@@ -132,6 +132,8 @@ export class Product {
         default: false
     })
     allowReservation !: boolean;
+
+    //minimumReserveQuantity
     
     /**
      * 

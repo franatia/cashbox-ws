@@ -3,7 +3,7 @@ import { Reflector } from "@nestjs/core";
 import { RELATIONS_CONFIG, RelationsConfigItem } from "./decorators/relations.decorator";
 import { extractFromRequestByPath } from "../access/helpers/request";
 import { RelationsEngine } from "./relations.engine";
-import { plainRequest } from "@/common/helpers/request.helper";
+import { plainRequest } from "@/common/helpers/http/request.helper";
 import { isUUID } from "class-validator";
 
 @Injectable()

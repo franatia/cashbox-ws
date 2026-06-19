@@ -1,5 +1,6 @@
 import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ProductSubtractType, ProductUnit } from '../../entities/product.entity';
+import { UUIDValidator } from '@/common/decorators/validator/uuid.validator';
 
 export class UpdateDto {
 
@@ -35,5 +36,10 @@ export class UpdateDto {
     @IsOptional()
     @IsEnum(ProductUnit)
     unit ?: ProductUnit;
+
+    @UUIDValidator({
+        optional : true
+    })
+    costId ?: string;
 
 }

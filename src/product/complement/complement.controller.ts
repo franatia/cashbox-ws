@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { ComplementService } from "./complement.service";
-import { joinPaths } from "@/common/helpers/path.helper";
+import { joinPaths } from "@/common/helpers/http/path.helper";
 import { Paths } from "../constants/paths";
 import { CreateDto } from "./dto/create.dto";
 import { RelationsConfig, RelationsRule } from "@/relations/decorators/relations.decorator";

@@ -8,7 +8,7 @@ import { Paths } from "../constants/paths";
 import UpdateDto from "./dto/update.dto";
 import GetDto from "./dto/get.dto";
 import { StripUndefinedPipe } from "@/common/pipes/stripe-undefined.pipe";
-import { joinPaths } from "@/common/helpers/path.helper";
+import { joinPaths } from "@/common/helpers/http/path.helper";
 
 @Controller(joinPaths(Paths.PRODUCT, Paths.COMPOSITY))
 export default class ComposityController {

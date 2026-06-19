@@ -2,7 +2,7 @@ import { BadRequestException, ExecutionContext, UnauthorizedException } from "@n
 import { AccessService } from "../access.service";
 import { AccessConfigMetadata } from "../decorators/access.decorator";
 import JwtRefreshPayload from "@/auth/interfaces/jwt-refresh-payload.interface";
-import { plainRequest } from "@/common/helpers/request.helper";
+import { plainRequest } from "@/common/helpers/http/request.helper";
 
 export type PoliciePayload = {
     token : JwtRefreshPayload,

@@ -1,14 +1,23 @@
-import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
-import { Item } from "@/product/entities/item.entity";
-import { Node } from "@/projects/entities/node.entity";
-import { Column, Entity, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
-import { StockMovement } from "./stock-movement.entity";
-import { ConceptualStockMovement } from "./conceptual-stock-movement.entity";
-import { Project } from "@/projects/entities/project.entity";
-import { Lot } from "./lot.entity";
+import { DatabaseSchemas } from "@/common/enum/db/database-schemas.enum";
+import { Item as ProductItem } from "@/product/entities/item.entity";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Project } from "@/project/entities/project.entity";
+import {Item} from "./item.entity";
+
+
+/**
+ * 
+ * En principio se generaria tantos Stock por product item, como Nodes haya
+ * 
+ * Razones:
+ * * Cada sucursal o deposito tiene su stock y localizacion
+ * * No podemos mezclar stock entre sucursales
+ * * Cada Product Item representa una unidad de caracteristicas unicas y diferenciables.
+ * 
+ */
 
 @Entity({
-    schema: DatabaseSchemas.main,
+    schema: DatabaseSchemas.stock,
     name: "stock"
 })
 export class Stock {
@@ -18,71 +27,38 @@ export class Stock {
 
     @ManyToOne(
         () => Project,
-        project => project.stock,
         {
-            eager: false,
             onDelete: "CASCADE"
         }
     )
     project !: Project;
 
-    @ManyToOne(
-        () => Node,
-        node => node.stock,
-        {
-            eager: false,
-            onDelete: "CASCADE"
-        }
-    )
-    node!: Node;
-
     @OneToOne(
-        () => Item,
+        () => ProductItem,
         productItem => productItem.stock,
         {
-            eager: false,
             onDelete: "CASCADE"
         }
     )
-    productItem!: Item;
+    @JoinColumn()
+    productItem!: ProductItem;
+
+    @OneToMany(
+        () => Item,
+        item => item.stock
+    )
+    items !: Item[];
 
     @Column({
         type : "int",
-        default: 0
+        default : 0
     })
     quantity!: number;
 
     @Column({
         type : "int",
-        default: 0
+        default : 0
     })
-    totalAmount!: number;
-
-    @OneToMany(
-        () => Lot,
-        lot => lot.stock,
-        {
-            eager: false
-        }
-    )
-    lots!: Lot[];
-
-    @OneToMany(
-        () => StockMovement,
-        stockMovement => stockMovement.stock,
-        {
-            eager: false
-        }
-    )
-    movements!: StockMovement[];
-
-    @OneToMany(
-        () => ConceptualStockMovement,
-        conceptualStockMovement => conceptualStockMovement.stock,
-        {
-            eager: false
-        }
-    )
-    conceptualMovements!: ConceptualStockMovement[];
+    remaining!: number;
 
 }

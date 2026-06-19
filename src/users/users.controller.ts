@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CurrentSub } from '@/common/decorators/token.decorator';
+import { CurrentSub } from '@/common/decorators/access/token.decorator';
 
 @Controller('users')
 export class UsersController {

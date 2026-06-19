@@ -1,7 +1,10 @@
 import { InjectRepository } from "@nestjs/typeorm";
 import { ItemGroup, ItemGroupType } from "../entities/item-group.entity";
-import { DataSource, DeepPartial, EntityManager, FindManyOptions, FindOneOptions, FindOptionsWhere, Repository } from "typeorm";
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { DataSource, DeepPartial, EntityManager, Repository } from "typeorm";
+import { forwardRef, Inject, Injectable } from "@nestjs/common";
+import {BaseQuery} from "@/common/models/crud/query/base-query.crud";
+import { ItemService } from "../item/item.service";
+import { isEmptyObject } from "@/common/helpers/object.helper";
 
 /**
  * 
@@ -12,8 +15,9 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 type OrmParams = {
 
     name?: string,
-    basePrice?: number,
     webVisibility?: boolean,
+    basePrice?: number,
+    baseCost?: number,
     featureGroupId?: string,
     productId?: string,
     type?: ItemGroupType,
@@ -29,6 +33,12 @@ type UpdateOrmParams = {
 
 }
 
+type UpdateItemsParams = {
+    baseCost?: number;
+    basePrice?: number;
+    costId?: string;
+}
+
 /**
  * 
  * SAFE UPDATE PARAMS
@@ -38,71 +48,26 @@ type UpdateOrmParams = {
 type SafeUpdateOrm = {
     name?: string,
     basePrice?: number,
+    baseCost?: number,
     webVisibility?: boolean,
+    costId?: string
 }
 
 @Injectable()
-export default class ItemGroupQuery {
+export default class ItemGroupQuery extends BaseQuery<ItemGroup> {
 
     constructor(
 
         @InjectRepository(ItemGroup)
-        private readonly repo: Repository<ItemGroup>,
+        repo: Repository<ItemGroup>,
 
         private readonly dataSource: DataSource,
 
-    ) { }
+        @Inject(forwardRef(() => ItemService))
+        private readonly itemService: ItemService
 
-    /**
-     * 
-     * FIND
-     * 
-     */
-
-    /**
-         * 
-         * @param where 
-         * @param select 
-         * @returns 
-         */
-
-    async findOne(
-        options: FindOneOptions<ItemGroup>
     ) {
-        return this.repo.findOne(options);
-
-    }
-
-    /**
-     * 
-     * @param options 
-     * @returns 
-     */
-
-    async findOneOrFail(
-        options: FindOneOptions<ItemGroup>
-    ): Promise<ItemGroup> {
-
-        const group = await this.findOne(options);
-
-        if (!group) {
-            throw new BadRequestException("Product item group was not found");
-        }
-
-        return group;
-
-    }
-
-    /**
-     * 
-     * @param options 
-     * @returns 
-     */
-
-    async findMany(
-        options: FindManyOptions<ItemGroup>
-    ): Promise<ItemGroup[]> {
-        return this.repo.find(options);
+        super(ItemGroup, repo)
     }
 
     /**
@@ -144,41 +109,7 @@ export default class ItemGroupQuery {
 
     /**
      * 
-     * EXISTS
-     * 
-     */
-
-    /**
-     * 
-     * @param where 
-     * @returns 
-     */
-
-    exists(
-        where: FindOptionsWhere<ItemGroup>
-    ) {
-        return this.repo.exists({
-            where
-        })
-    }
-
-    /**
-     * 
-     * COUNT
-     * 
-     */
-
-    count(
-        where: FindOptionsWhere<ItemGroup>
-    ) {
-        return this.repo.count({
-            where
-        })
-    }
-
-    /**
-     * 
-     * MODIFIERS
+     * TRANSACTIONS
      * 
      */
 
@@ -236,6 +167,12 @@ export default class ItemGroupQuery {
 
     /**
      * 
+     * SAVERS
+     * 
+     */
+
+    /**
+     * 
      * @param orm 
      * @returns 
      */
@@ -288,29 +225,72 @@ export default class ItemGroupQuery {
      */
 
     async updateOne(
-        itemGroupId: string,
-        orm: SafeUpdateOrm,
-        returning: string[] | string = "*"
+        id: string,
+        orm: SafeUpdateOrm
     ): Promise<ItemGroup> {
-        const { raw, affected } = await this.repo
-            .createQueryBuilder()
-            .update(ItemGroup)
-            .set(orm)
-            .where("id = :itemGroupId", { itemGroupId })
-            .returning(returning)
-            .execute();
 
-        if (!affected) {
-            throw new BadRequestException("Product item group was not affected");
+        const {
+            baseCost,
+            basePrice,
+            costId,
+            ...rest
+        } = orm;
+
+        const updateGroupParams = {
+            ...rest,
+            baseCost,
+            basePrice
+        };
+
+        const updateItemsParams = {
+            baseCost,
+            basePrice,
+            costId
+        };
+
+        const promises: Promise<any>[] = [];
+
+        if (!isEmptyObject(updateGroupParams)) {
+            promises.push(
+                this.resolveUpdate(
+                    {id},
+                    updateGroupParams
+                )
+            )
         }
+
+        if(!isEmptyObject(updateItemsParams)){
+            promises.push(
+                this.updateItems(
+                    id,
+                    updateItemsParams
+                )
+            )
+        }
+
+        const [raw = {}] = await Promise.all(promises);
 
         const entity = this.repo.merge(
             new ItemGroup(),
-            raw[0]
+            raw
         )
 
         return entity;
 
+    }
+
+    private async updateItems(
+        id: string,
+        params: UpdateItemsParams
+    ) {
+
+        const isEmpty = isEmptyObject(params);
+        if (isEmpty) return;
+
+        return this.itemService.putManyByGroup(
+            id,
+            params
+        )
     }
 
     /**
@@ -326,9 +306,9 @@ export default class ItemGroupQuery {
      */
 
     async deleteOne(
-        options: FindOptionsWhere<ItemGroup>
+        id: string
     ) {
-        return this.repo.delete(options);
+        return this.delete({id});
     }
 
     /**
@@ -551,7 +531,7 @@ export default class ItemGroupQuery {
          * @returns 
          */
 
-    private makeOrm({
+    makeOrm({
         productId,
         featureValuesId,
         productItemsId,
@@ -596,7 +576,7 @@ export default class ItemGroupQuery {
      * @returns 
      */
 
-    private makeManyOrm(
+    makeManyOrm(
         params: OrmParams[]
     ) {
         return params.map(param => this.makeOrm(param));

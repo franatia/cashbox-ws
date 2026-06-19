@@ -1,5 +1,5 @@
-import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
-import { Project } from "@/projects/entities/project.entity";
+import { DatabaseSchemas } from "@/common/enum/db/database-schemas.enum";
+import { Project } from "@/project/entities/project.entity";
 import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Product } from "./product.entity";
 

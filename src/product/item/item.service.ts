@@ -1,21 +1,14 @@
 import { BadRequestException, forwardRef, Inject, Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { DeepPartial, FindManyOptions, FindOneOptions, FindOptionsWhere, In, IsNull, Not, Repository } from "typeorm";
+import { In, IsNull } from "typeorm";
 import { Item } from "../entities/item.entity";
 import { FeaturesService } from "../features/features.service";
-
-import { FeatureDto } from "../features/dto/feature.dto";
-
-import { DataSource } from "typeorm";
 import CreateDto from "./dto/create.dto";
-import { SelectQueryBuilder } from "typeorm";
-import { buildSku, SkuPrefix } from "@/common/helpers/sku.helper";
-import { FeatureGroupService } from "../feature-group/feature-group.service";
+import { buildSku, SkuPrefix } from "@/common/helpers/entities/sku.helper";
 import UpdateDto from "./dto/update.dto";
 import CreateManyByFeatureGroupDto from "./dto/create-many-feature-context.dto";
-import { FeatureContext } from "./interfaces/feature-context";
-import ItemQuery from "./item.query";
+import {ItemQuery} from "./item.query";
 import FeatureGroupQuery from "../feature-group/feature-group.query";
+import UpdateManyDto from "./dto/update-many.dto";
 
 /**
  * 
@@ -92,6 +85,29 @@ export class ItemService {
         if (!isExists && throwable) throw new BadRequestException("All product items are not correspond toward project");
 
         return isExists;
+
+    }
+
+    async linkedToCost(
+        id : string,
+        costId : string,
+        throwable : boolean = true
+    ){
+
+        const exists = await this.query.exists({
+            id,
+            cost : {
+                id : costId
+            }
+        });
+
+        if(!exists && throwable){
+            throw new BadRequestException(
+                "Product item is not linked with cost"
+            )
+        }
+
+        return exists;
 
     }
 
@@ -343,6 +359,56 @@ export class ItemService {
 
         return newItem;
 
+    }
+
+    async putMany(
+        dto : UpdateManyDto
+    ){
+
+        const {
+            itemsId,
+            ...rest
+        } = dto;
+
+        return this.query.updateSameContent(
+            {
+                itemsId
+            },
+            rest
+        )
+
+    }
+
+    /**
+     * 
+     * @param groupId 
+     * @param params 
+     */
+
+    putManyByGroup(
+        groupId : string,
+        params : UpdateDto
+    ){
+
+        return this.query.updateSameContent(
+            {
+                itemGroupId: groupId
+            },
+            params
+        );
+
+    }
+
+    putManyByProduct(
+        productId : string,
+        params : UpdateDto
+    ){
+        return this.query.updateSameContent(
+            {
+                productId
+            },
+            params
+        )
     }
 
     /**

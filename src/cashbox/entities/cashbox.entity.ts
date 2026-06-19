@@ -1,8 +1,8 @@
-import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
-import { Node } from "@/projects/entities/node.entity";
+import { DatabaseSchemas } from "@/common/enum/db/database-schemas.enum";
+import { Node } from "@/project/entities/node.entity";
 import { Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { CashboxMovement } from "./cashbox-movement.entity";
-import { Project } from "@/projects/entities/project.entity";
+import { Project } from "@/project/entities/project.entity";
 
 @Entity({
     schema: DatabaseSchemas.main,

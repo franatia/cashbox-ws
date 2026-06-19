@@ -1,8 +1,8 @@
 import { CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Catalog } from "./catalog.entity";
 import { Product } from "@/product/entities/product.entity";
-import { Project } from "@/projects/entities/project.entity";
-import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
+import { Project } from "@/project/entities/project.entity";
+import { DatabaseSchemas } from "@/common/enum/db/database-schemas.enum";
 
 @Entity({
     schema : DatabaseSchemas.catalog,

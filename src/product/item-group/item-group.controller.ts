@@ -1,7 +1,7 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Put, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { ItemGroupService } from "./item-group.service";
 import { Paths } from "../constants/paths";
-import { joinPaths } from "@/common/helpers/path.helper";
+import { joinPaths } from "@/common/helpers/http/path.helper";
 import CreateDto from "./dto/create.dto";
 import { AccessPolicies } from "@/access/decorators/access.decorator";
 import { RelationsConfig, RelationsRule } from "@/relations/decorators/relations.decorator";
@@ -11,8 +11,9 @@ import UpdateFeatureValuesDto from "./dto/update-feature-values.dto";
 import UpdateItemsDto from "./dto/update-items.dto";
 import GetDto from "./dto/get.dto";
 import ItemGroupSearch from "./item-group.search";
-import { CurrentProject } from "@/common/decorators/token.decorator";
+import { CurrentProject } from "@/common/decorators/access/token.decorator";
 import { StripUndefinedPipe } from "@/common/pipes/stripe-undefined.pipe";
+import { IsFeaturesType, IsItemsType, NotFeatureGroupType } from "./guards/type.guard";
 
 const basicGetRelationsConfig = [
     {
@@ -153,8 +154,14 @@ export default class ItemGroupController {
             from: Paths.PARAM_ITEM_GROUP_ID,
             to: "context.projectId",
             rule: RelationsRule.PRODUCT_ITEM_GROUP_TO_PROJECT
+        },
+        {
+            from : "costId?",
+            to : "context.projectId",
+            rule : RelationsRule.COST_TO_PROJECT
         }
     )
+    @UseGuards()
     @Put(Paths.PARAM_ITEM_GROUP)
     put(
         @Param(Paths.PARAM_ITEM_GROUP_ID, new ParseUUIDPipe()) groupId: string,
@@ -196,6 +203,7 @@ export default class ItemGroupController {
             rule: RelationsRule.FEATURE_VALUES_RELATED_TO_PRODUCT_ITEM_GROUP
         }
     )
+    @UseGuards(IsFeaturesType(Paths.PARAM_ITEM_GROUP_ID))
     @Patch(joinPaths(Paths.FEATURE_VALUES, Paths.PARAM_ITEM_GROUP))
     patchFeatureValues(
         @Param(Paths.PARAM_ITEM_GROUP_ID, new ParseUUIDPipe()) groupId: string,
@@ -234,6 +242,7 @@ export default class ItemGroupController {
             rule: RelationsRule.PRODUCT_ITEMS_RELATED_TO_PRODUCT_ITEM_GROUP
         }
     )
+    @UseGuards(IsItemsType(Paths.PARAM_ITEM_GROUP_ID))
     @Patch(joinPaths(Paths.ITEMS, Paths.PARAM_ITEM_GROUP))
     patchItems(
         @Param(Paths.PARAM_ITEM_GROUP_ID, new ParseUUIDPipe()) groupId: string,
@@ -259,7 +268,7 @@ export default class ItemGroupController {
      * @param groupId 
      * @returns 
      */
-
+    
     @RelationsConfig(
         {
             from: Paths.PARAM_ITEM_GROUP_ID,
@@ -267,6 +276,7 @@ export default class ItemGroupController {
             rule: RelationsRule.PRODUCT_ITEM_GROUP_TO_PROJECT
         }
     )
+    @UseGuards(NotFeatureGroupType(Paths.PARAM_ITEM_GROUP_ID))
     @Delete(Paths.PARAM_ITEM_GROUP)
     delete(
         @Param(Paths.PARAM_ITEM_GROUP_ID, new ParseUUIDPipe()) groupId: string

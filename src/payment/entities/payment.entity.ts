@@ -1,8 +1,8 @@
-import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
+import { DatabaseSchemas } from "@/common/enum/db/database-schemas.enum";
 import { Customer } from "@/customer/entities/customer.entity";
 import { Debt } from "@/debt/entities/debt.entity";
 import { Order } from "@/order/entities/order.entity";
-import { Project } from "@/projects/entities/project.entity";
+import { Project } from "@/project/entities/project.entity";
 import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { PaymentMethod, PaymentStatus } from "./payment.enum";
 

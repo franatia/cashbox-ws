@@ -6,7 +6,7 @@ import { AccessPolicies } from '@/access/decorators/access.decorator';
 import { ProjectMainPolicie } from '@/access/policies/project/main.policie';
 import { RelationsConfig, RelationsRule } from '@/relations/decorators/relations.decorator';
 import { ProductService } from './product.service';
-import { CurrentProject } from '@/common/decorators/token.decorator';
+import { CurrentProject } from '@/common/decorators/access/token.decorator';
 import { UpdateDto } from './dto/update.dto';
 import { StripUndefinedPipe } from '@/common/pipes/stripe-undefined.pipe';
 import ProductSearch from './product.search';

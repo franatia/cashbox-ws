@@ -1,8 +1,8 @@
-import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
+import { DatabaseSchemas } from "@/common/enum/db/database-schemas.enum";
 import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { RuleCondition } from "./rule-condition.entity";
 import { RuleEffect } from "./rule-effect.entity";
-import { Project } from "@/projects/entities/project.entity";
+import { Project } from "@/project/entities/project.entity";
 
 export enum RuleOperator {
     AND = "AND",

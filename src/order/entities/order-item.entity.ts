@@ -1,10 +1,11 @@
-import { DatabaseSchemas } from "@/common/constants/database-schemas.enum";
+import { DatabaseSchemas } from "@/common/enum/db/database-schemas.enum";
 import { PriceList } from "@/price/entities/price-list.entity";
 import { Item } from "@/product/entities/item.entity";
-import { Tax } from "@/tax/entities/tax.entity";
-import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { ReserveOrderStatus } from "../enums/reserve.enum";
+import { OrderStatus, OrderType } from "../enums/order.enum";
+import { Reserve } from "@/reserve/entities/reserve.entity";
 import { Order } from "./order.entity";
-import { Lot } from "@/stock/entities/lot.entity";
 
 @Entity({
     schema: DatabaseSchemas.main,
@@ -43,7 +44,9 @@ export class OrderItem {
     priceList!: PriceList;
 
     @Column({
-        type: "int"
+        type : "decimal",
+        precision : 14,
+        scale : 2
     })
     price!: number;
 
@@ -53,48 +56,74 @@ export class OrderItem {
     quantity!: number;
 
     @Column({
-        type: "int",
+        type: "decimal",
+        precision: 14,
+        scale: 2,
         default: 0
     })
     totalTaxes!: number;
-    
+
     @Column({
-        type: "int"
+        type: "decimal",
+        precision: 14,
+        scale: 2
     })
     profit!: number;
 
     @Column({
-        type: "int"
+        type: "decimal",
+        precision: 14,
+        scale: 2
     })
     discount!: number;
 
-    @ManyToMany(
-        () => Tax,
-        {
-            eager: false
-        }
-    )
-    taxes!: Tax[];
+    /*@Column({
+        type: "decimal",
+        precision: 14,
+        scale: 2
+    })*/
+
+   //TAX SNAPSHOT
 
     /**
      * 
-     * RESERVE STAGE
+     * CONFIG SECTION
+     * 
+     */
+
+
+    @Column({
+        type: "enum",
+        enum: OrderType
+    })
+    type !: OrderType;
+
+    @Column({
+        type: "enum",
+        enum: OrderStatus,
+        nullable: true
+    })
+    status?: OrderStatus;
+
+    /**
+     * 
+     * RESERVE SECTION
      * 
      */
 
     @Column({
-        type : "boolean",
-        default: false
+        type: "enum",
+        enum: ReserveOrderStatus,
+        nullable: true
     })
-    reserve !: boolean;
+    reserveStatus?: ReserveOrderStatus;
 
     @OneToOne(
-        () => Lot,
+        () => Reserve,
         {
-            nullable : true
+            nullable: true
         }
     )
-    @JoinColumn()
-    linkedLot ?: Lot
+    reserve?: Reserve
 
 }
